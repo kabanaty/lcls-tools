@@ -1,4 +1,3 @@
-from pydantic import PositiveFloat
 from lcls_tools.common.devices.wire import Wire
 from lcls_tools.common.devices.lblm import LBLM
 from lcls_tools.common.devices.reader import create_wire
@@ -10,10 +9,9 @@ import os
 
 
 class WireScanMeasurement(Measurement):
-    name = "wire_scan"
+    name: str = "wire_scan"
     wire: Wire
     lblm: LBLM
-    wait_time: PositiveFloat = 1.0
 
     def measure(self, beam_path, area, wire_name) -> dict:
         """
