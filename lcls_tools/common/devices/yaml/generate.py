@@ -390,6 +390,7 @@ class YAMLGenerator:
             "I0_LOSS": "i0_loss",
             "FAST_AMP_GAIN": "gain",
             "FAST_AMP_BYP": "bypass",
+            "QDCRAW": "qdcraw",
         }
         # should be structured {MAD-NAME : {field_name : value, field_name_2 : value}, ... }
         additional_metadata_data = get_lblm_metadata()
