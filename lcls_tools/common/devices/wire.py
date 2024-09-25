@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import (
     BaseModel,
-    # PositiveFloat,
+    PositiveFloat,
     SerializeAsAny,
     field_validator,
     conint,
@@ -10,7 +10,7 @@ from pydantic import (
 from typing import (
     Dict,
     List,
-    # Optional,
+    Optional,
     Union,
 )
 from lcls_tools.common.devices.device import (
@@ -113,10 +113,9 @@ class WireControlInformation(ControlInformation):
 
 
 class WireMetadata(Metadata):
-    # material: Optional[str] = None
-    # sum_l: Optional[PositiveFloat] = None
-    # TODO: Add LBLM and BPM infomration here?
-    # TODO: Add info on locations for X, Y, U wires
+    sum_l: Optional[PositiveFloat] = None
+    lblms: Optional[List[str]] = None
+    # bpms: Optional[List[str]] = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
