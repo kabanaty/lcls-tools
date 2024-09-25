@@ -41,6 +41,7 @@ class LBLMPVSet(PVSet):
     i0_loss: PV
     gain: PV
     bypass: PV
+    qdcraw: PV
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -70,10 +71,6 @@ class LBLM(Device):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    def fast_buffer(self, buffer):
-        """Retrieve fast signal data from timing buffer"""
-        return buffer.get_buffer_data(f"{self.controls_information.control_name}FAST")
 
     @property
     def i0_loss(self):
@@ -111,6 +108,11 @@ class LBLM(Device):
         except ValidationError as e:
             print("Bypass must be a boolean:", e)
 
+    @property
+    def qdcraw(self):
+        """Get QDC Raw value"""
+        return self.controls_information.PVs.qdcraw.get()
+
     def i0_loss_buffer(self, buffer):
         """Retrieve I0 Loss data from timing buffer"""
         return buffer.get_buffer_data(f"{self.controls_information.PVs.i0_loss.pvname}{buffer.number}")
@@ -118,6 +120,14 @@ class LBLM(Device):
     def gated_integral_buffer(self, buffer):
         """Get Gated Integral data from timing buffer"""
         return buffer.get_buffer_data(self.controls_information.PVs.gated_integral)
+    
+    def fast_buffer(self, buffer):
+        """Retrieve Fast signal data from timing buffer"""
+        return buffer.get_buffer_data(f"{self.controls_information.control_name}:FAST")
+    
+    def qdcraw_buffer(self, buffer):
+        """Retrieve QDC Raw signal data from timing buffer"""
+        return buffer.get_buffer_data(f"{self.controls_information.control_name}:QDCRAW")
 
 
 class LBLMCollection(BaseModel):
