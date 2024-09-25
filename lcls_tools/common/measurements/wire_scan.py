@@ -11,7 +11,6 @@ import os
 class WireScanMeasurement(Measurement):
     name: str = "wire_scan"
     wire: Wire
-    lblm: LBLM
 
     def measure(self, beam_path, area, wire_name) -> dict:
         """
