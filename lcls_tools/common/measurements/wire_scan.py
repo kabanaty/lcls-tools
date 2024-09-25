@@ -15,7 +15,7 @@ class WireScanMeasurement(Measurement):
     lblm: LBLM
     wait_time: PositiveFloat = 1.0
 
-    def measure(self, beam_path, area, name) -> dict:
+    def measure(self, beam_path, area, wire_name) -> dict:
         """
         Perform a wire scan measurement.
 
@@ -40,8 +40,8 @@ class WireScanMeasurement(Measurement):
         """
         # Create dictionary to hold all relevant objects (Wires, LBLMs, BPMs)
         # and create those objects from Wire metadata
-        my_wire = create_wire(area=area, name=name)
-        devices = {name: my_wire}
+        my_wire = create_wire(area=area, name=wire_name)
+        devices = {wire_name: my_wire}
         devices.update({lblm: create_lblm(area=area, name=lblm) for lblm in my_wire.metadata.lblms})
         results = {}
 
@@ -67,7 +67,7 @@ class WireScanMeasurement(Measurement):
             time.sleep(0.1)
 
         # 5) Get buffer data and put into results dictionary
-        results[name] = my_wire.position_buffer(my_buffer)
+        results[wire_name] = my_wire.position_buffer(my_buffer)
         if 'SC' in beam_path:
             results.update({lblm: devices[lblm].fast_buffer(my_buffer) for lblm in my_wire.metadata.lblms})
         elif 'CU' in beam_path:
