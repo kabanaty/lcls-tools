@@ -487,6 +487,10 @@ class Wire(Device):
         except ValidationError as e:
             print("Range value must be an int:", e)
 
+    def position_buffer(self, my_buffer):
+        """Returns the Wire Position waveform from a timing buffer"""
+        return my_buffer.get_data_buffer(self.controls_information.PVs.position.pvname)
+
 
 class WireCollection(BaseModel):
     wires: Dict[str, SerializeAsAny[Wire]]
