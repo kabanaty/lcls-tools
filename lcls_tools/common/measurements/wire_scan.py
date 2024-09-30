@@ -1,5 +1,4 @@
 from lcls_tools.common.devices.wire import Wire
-from lcls_tools.common.devices.lblm import LBLM
 from lcls_tools.common.devices.reader import create_wire
 from lcls_tools.common.devices.reader import create_lblm
 from lcls_tools.common.measurements.measurement import Measurement
@@ -58,6 +57,9 @@ class WireScanMeasurement(Measurement):
 
         # 3) Start wire scan
         my_wire.start_scan()
+        
+        # Wait briefly before checking buffer 'ready'
+        time.sleep(0.1)
 
         # 4) Wait for buffer 'ready'
         while not my_buffer.is_acquisition_complete():
