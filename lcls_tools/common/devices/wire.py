@@ -59,19 +59,19 @@ class PlaneModel(BaseModel):
 class WirePVSet(PVSet):
     abort_scan: PV
     enabled: PV
-    homed: PV
-    initialize: PV
+    homed: Optional[PV] = None
+    initialize: Optional[PV] = None
     initialize_status: PV
     motor: PV
     position: PV
-    retract: PV
+    retract: Optional[PV] = None
     scan_pulses: PV
     speed: PV
     speed_max: PV
     speed_min: PV
     start_scan: PV
-    temperature: PV
-    timeout: PV
+    temperature: Optional[PV] = None
+    timeout: Optional[PV] = None
     use_u_wire: PV
     use_x_wire: PV
     use_y_wire: PV
