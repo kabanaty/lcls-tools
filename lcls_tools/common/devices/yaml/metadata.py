@@ -55,52 +55,52 @@ def get_wire_metadata(wire_names: List[str] = []):
         "IPWS1": {"lblms": []},
         "IPWS3": {"lblms": []},
         # IN20
-        "WS01": {"lblms": []},
-        "WS02": {"lblms": []},
-        "WS03": {"lblms": []},
-        "WS04": {"lblms": []},
+        "WS01": {"lblms": ['PMTINJ03', 'PMTINJ04', 'PMTINJ01', 'PMTINJ02', 'PMTINJ05', 'PMTINJ06']},
+        "WS02": {"lblms": ['PMTINJ03', 'PMTINJ04', 'PMTINJ01', 'PMTINJ02', 'PMTINJ05', 'PMTINJ06']},
+        "WS03": {"lblms": ['PMTINJ03', 'PMTINJ04', 'PMTINJ01', 'PMTINJ02', 'PMTINJ05', 'PMTINJ06']},
+        "WS04": {"lblms": ['PMTINJ03', 'PMTINJ04', 'PMTINJ01', 'PMTINJ02', 'PMTINJ05', 'PMTINJ06']},
         # LI21
-        "WS11": {"lblms": []},
-        "WS12": {"lblms": []},
-        "WS13": {"lblms": []},
+        "WS11": {"lblms": ['PMT2111', 'PMT21293', 'PMT2113', 'PMT21350', 'PMT2114', 'PMT2115']},
+        "WS12": {"lblms": ['PMT2111', 'PMT21293', 'PMT2113', 'PMT21350', 'PMT2114', 'PMT2115']},
+        "WS13": {"lblms": ['PMT2111', 'PMT21293', 'PMT2113', 'PMT21350', 'PMT2114', 'PMT2115']},
         # LI24
-        "WS24": {"lblms": []},
+        "WS24": {"lblms": ['PMT24705', 'PMT24706']},
         # LI28
-        "WS27644": {"lblms": []},
-        "WS28144": {"lblms": []},
-        "WS28444": {"lblms": []},
-        "WS28744": {"lblms": []},
+        "WS27644": {"lblms": ['PTM28750', 'PMT29150', 'PMT756', 'PMT820']},
+        "WS28144": {"lblms": ['PTM28750', 'PMT29150', 'PMT756', 'PMT820']},
+        "WS28444": {"lblms": ['PTM28750', 'PMT29150', 'PMT756', 'PMT820']},
+        "WS28744": {"lblms": ['PTM28750', 'PMT29150', 'PMT756', 'PMT820']},
         # HTR
-        "WS0H04": {"lblms": []},
+        "WS0H04": {"lblms": ['LBLM01A']},
         # DIAG0
         "WSDG0": {"lblms": []},
         # COL1
-        "WSC104": {"lblms": []},
-        "WSC106": {"lblms": []},
-        "WSC108": {"lblms": []},
-        "WSC110": {"lblms": []},
+        "WSC104": {"lblms": ['LBLM03A', 'LBLM04A']},
+        "WSC106": {"lblms": ['LBLM03A', 'LBLM04A']},
+        "WSC108": {"lblms": ['LBLM03A', 'LBLM04A']},
+        "WSC110": {"lblms": ['LBLM03A', 'LBLM04A']},
         # EMIT2
-        "WSEMIT2": {"lblms": []},
+        "WSEMIT2": {"lblms": ['LBLM04A', 'LBLM07A']},
         # BYP
         "WSBP1": {"lblms": ["LBLM11A", "LBLM11A_1", "LBLM11A_2", "LBLM11A_3"]},
         "WSBP2": {"lblms": ["LBLM11A", "LBLM11A_1", "LBLM11A_2", "LBLM11A_3"]},
         "WSBP3": {"lblms": ["LBLM11A", "LBLM11A_1", "LBLM11A_2", "LBLM11A_3"]},
         "WSBP4": {"lblms": ["LBLM11A", "LBLM11A_1", "LBLM11A_2", "LBLM11A_3"]},
         # SPD
-        "WSSP1D": {"lblms": []},
+        "WSSP1D": {"lblms": ['LBLM22A']},
         # LTUH
-        "WSVM2": {"lblms": []},
-        "WSDL31": {"lblms": []},
-        "WSDL4": {"lblms": []},
-        "WS31": {"lblms": []},
-        "WS32": {"lblms": []},
-        "WS33": {"lblms": []},
-        "WS34": {"lblms": []},
+        "WSVM2": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
+        "WSDL31": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
+        "WSDL4": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
+        "WS31": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
+        "WS32": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
+        "WS33": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
+        "WS34": {"lblms": ['PMT122', 'PMT246', 'PMT550', 'PMT755', 'PMT756']},
         # LTUS
-        "WS31B": {"lblms": []},
-        "WS32B": {"lblms": []},
-        "WS33B": {"lblms": []},
-        "WS34B": {"lblms": []},
+        "WS31B": {"lblms": ['LBLMS32A']},
+        "WS32B": {"lblms": ['LBLMS32A']},
+        "WS33B": {"lblms": ['LBLMS32A']},
+        "WS34B": {"lblms": ['LBLMS32A']},
     }
     return wire_metadata
 
