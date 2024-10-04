@@ -20,6 +20,7 @@ from lcls_tools.common.devices.device import (
     PVSet,
 )
 from epics import PV
+from lcls_tools.common.measurements.wire_scan import WireScanMeasurement
 
 EPICS_ERROR_MESSAGE = "Unable to connect to EPICS."
 
@@ -490,6 +491,10 @@ class Wire(Device):
     def position_buffer(self, my_buffer):
         """Returns the Wire Position waveform from a timing buffer"""
         return my_buffer.get_data_buffer(self.controls_information.PVs.position.pvname)
+
+    def measurement(self, beam_path):
+        test = WireScanMeasurement()
+        test.simple_test(my_wire=self, beam_path='CU_HXR')
 
 
 class WireCollection(BaseModel):
