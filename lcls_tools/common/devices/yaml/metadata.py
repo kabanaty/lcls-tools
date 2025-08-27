@@ -64,14 +64,19 @@ def get_screen_metadata(basic_screen_data: dict):
 def get_wire_metadata(wire_names: List[str] = []):
     # return a data structure of the form:
     # {
-    #  scr-name-1 : {metadata-field-1 : value-1, metadata-field-2 : value-2},
-    #  scr-name-2 : {metadata-field-1 : value-1, metadata-field-2 : value-2},
+    #  wire-name-1 : {metadata-field-1 : value-1, metadata-field-2 : value-2},
+    #  wire-name-2 : {metadata-field-1 : value-1, metadata-field-2 : value-2},
     #  ...
     # }
-    here = os.path.dirnam(__file__)
+    wire_metadata = {}
+
+    here = os.path.dirname(__file__)
     yaml_path = os.path.join(here, "wire_metadata.yaml")
+
     with open(yaml_path, "r") as f:
         wire_metadata = yaml.safe_load(f)
+
+
     return wire_metadata
 
 
@@ -136,3 +141,15 @@ def get_tcav_metadata(tcav_names: List[str] = [], method: callable = None, **kwa
         return device_elements
     else:
         return {}
+
+
+def get_pmt_metadata(pmt_names: List[str] = []):
+    # return a data structure of the form:
+    # {
+    #  bpm-name-1 : {metadata-field-1 : value-1, metadata-field-2 : value-2},
+    #  bpm-name-2 : {metadata-field-1 : value-1, metadata-field-2 : value-2},
+    #  ...
+    # }
+    if pmt_names:
+        raise NotImplementedError("No method of getting additional metadata for pmts.")
+    return {}
