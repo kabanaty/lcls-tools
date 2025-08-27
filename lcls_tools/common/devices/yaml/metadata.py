@@ -76,7 +76,6 @@ def get_wire_metadata(wire_names: List[str] = []):
     with open(yaml_path, "r") as f:
         wire_metadata = yaml.safe_load(f)
 
-
     return wire_metadata
 
 
