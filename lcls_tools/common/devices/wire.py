@@ -103,7 +103,7 @@ class WireControlInformation(ControlInformation):
 
 
 class WireMetadata(Metadata):
-    lblms: List[str]
+    detectors: List[str]
     bpms_before_wire: Optional[List[str]] = None
     bpms_after_wire: Optional[List[str]] = None
 
