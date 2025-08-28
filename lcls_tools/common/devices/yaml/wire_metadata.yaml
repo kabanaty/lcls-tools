@@ -83,7 +83,7 @@ WS644:
     - PMT29150:LI29
     - PMT756:LTUH
     - PMT820:LTUH
-  
+
 WS0H04:
   detectors:
     - LBLM01A:HTR
@@ -395,7 +395,7 @@ WS31:
     - PMT820:LTUH
     - PMT850:LTUH
     - LBLM32A:LTUH
-    
+
 WS32:
   detectors:
     - PMT122:LTUH
@@ -408,7 +408,7 @@ WS32:
     - PMT820:LTUH
     - PMT850:LTUH
     - LBLM32A:LTUH
-    
+
 WS33:
   detectors:
     - PMT122:LTUH

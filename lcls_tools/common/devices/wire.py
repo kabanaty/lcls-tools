@@ -178,6 +178,14 @@ class Wire(Device):
         """Returns the readback from the MOTR PV"""
         return self.controls_information.PVs.motor.get()
 
+    @motor.setter
+    def motor(self, val: int) -> None:
+        try:
+            IntegerModel(value=val)
+            self.controls_information.PVs.motor.put(value=val)
+        except ValidationError as e:
+            print("Motor input must be an integer:", e)
+
     @property
     def motor_rbv(self):
         """Returns the .RBV from the MOTR PV"""

@@ -208,8 +208,9 @@ class WireBeamProfileMeasurement(Measurement):
         start_time = time.monotonic()
         last_print_time = start_time
         last_trigger_time = start_time
-        attempt_count = 10
+        attempt_count = 0
 
+        elapsed_time = 0
         while not self.my_wire.enabled:
             current_time = time.monotonic()
             elapsed_time = current_time - start_time
@@ -217,6 +218,7 @@ class WireBeamProfileMeasurement(Measurement):
             if elapsed_time >= 30:
                 msg = f"{self.my_wire.name} failed to initialize" \
                        "after {int(elapsed_time)} seconds"
+
                 self.logger.error(msg)
                 raise TimeoutError(msg)
 
