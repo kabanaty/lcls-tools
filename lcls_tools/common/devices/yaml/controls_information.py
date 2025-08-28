@@ -101,8 +101,8 @@ def get_tcav_controls_information(tcav_names: List[str] = []):
 def get_pmt_controls_information(pmt_names: List[str] = None):
     # return a data structure of the form:
     # {
-    #  scr-name-1 : {controls-information-field-1 : value-1, controls-information-field-2 : value-2, ...},
-    #  scr-name-2 : {controls-information-field-1 : value-1, controls-information-field-2 : value-2, ...},
+    #  pmt-name-1 : {controls-information-field-1 : value-1, controls-information-field-2 : value-2, ...},
+    #  pmt-name-2 : {controls-information-field-1 : value-1, controls-information-field-2 : value-2, ...},
     #  ...
     # }
 

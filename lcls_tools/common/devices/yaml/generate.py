@@ -10,6 +10,7 @@ from lcls_tools.common.devices.yaml.metadata import (
     get_lblm_metadata,
     get_bpm_metadata,
     get_tcav_metadata,
+    get_pmt_metadata,
 )
 from lcls_tools.common.devices.yaml.controls_information import (
     get_magnet_controls_information,
@@ -18,6 +19,7 @@ from lcls_tools.common.devices.yaml.controls_information import (
     get_lblm_controls_information,
     get_bpm_controls_information,
     get_tcav_controls_information,
+    get_pmt_controls_information,
 )
 
 
@@ -565,7 +567,6 @@ class YAMLGenerator:
                 additional_metadata=additional_metadata_data,
             )
         return complete_pmt_data
-
 
     def extract_metadata_by_device_names(
         self, device_names=Optional[List[str]], required_fields=Optional[List[str]]
