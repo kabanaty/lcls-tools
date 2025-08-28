@@ -76,7 +76,6 @@ def get_wire_metadata(wire_names: List[str] = []):
     with open(yaml_path, "r") as f:
         wire_metadata = yaml.safe_load(f)
 
-
     return wire_metadata
 
 
@@ -151,5 +150,6 @@ def get_pmt_metadata(pmt_names: List[str] = []):
     #  ...
     # }
     if pmt_names:
-        raise NotImplementedError("No method of getting additional metadata for pmts.")
+        raise NotImplementedError("No method of getting additional"
+                                  " metadata for pmts.")
     return {}
