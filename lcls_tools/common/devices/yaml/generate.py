@@ -531,7 +531,10 @@ class YAMLGenerator:
             return {}
 
     def extract_pmts(self, area: Union[str, List[str]] = ["HTR"]):
-        required_pmt_types = ["INST", "PMT"]  # PMTs have Keyword "INST" in lcls_elements.csv
+        required_pmt_types = [
+            "INST",
+            "PMT",
+        ]  # PMTs have Keyword "INST" in lcls_elements.csv
 
         possible_pmt_pvs = {
             "QDCRAW": "qdcraw",
