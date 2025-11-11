@@ -1,12 +1,13 @@
 from lcls_tools.common.devices.reader import create_bpm
 from lcls_tools.common.measurements.measurement import Measurement
 from lcls_tools.common.measurements.utils import collect_with_size_check
-import meme.names
 import pandas as pd
 from edef import BSABuffer
 from lcls_tools.common.devices.wire import Wire
 from pydantic import model_validator
 from typing import Optional
+from pathlib import Path
+import yaml
 
 
 class TMITLoss(Measurement):
@@ -14,7 +15,7 @@ class TMITLoss(Measurement):
     my_buffer: BSABuffer
     beampath: str
     region: str
-    my_wire: Wire
+    beam_profile_device: Wire
 
     # Extra fields to be set after validation
     idx_before: Optional[list] = None
@@ -23,7 +24,6 @@ class TMITLoss(Measurement):
 
     @model_validator(mode="after")
     def run_setup(self) -> "TMITLoss":
-        bpms_elements, bpms_devices = self.find_bpms()
         self.idx_before, self.idx_after = self.get_bpm_idx(bpms_devices)
         self.bpms = self.create_bpms(bpms_elements)
         return self
@@ -58,80 +58,30 @@ class TMITLoss(Measurement):
         tmit_loss = tmit_loss_pd.to_numpy()
         return tmit_loss
 
-    def find_bpms(self):
+    def create_bpms(self):
         """
-        Retrieve BPM elements and their corresponding EPICS names for a
-        given beam path.
+        Create BPM device objects for a given beampath.
 
-        This method queries BPM elements and devices using the `meme.names`
-        module.  It extracts the area from each BPM device name and replaces
-        any area containing "BPN" with "BYP" for proper YAML file lookup.
-
-        Args:
-            beampath (str): The beam path tag used to filter BPM elements
-            and devices.
+        This method loads a YAML config file containing BPM definitions,
+        filters them based on the specified beampath, and creates BPM objects.
 
         Returns:
-            tuple: A tuple containing:
-                - pd.DataFrame: A DataFrame with BPM elements and their
-                                corresponding areas.
-                - list: A list of BPM device names.
-        """
-        # List of BPM MAD names based on beampath
-        bpms_elements = meme.names.list_elements(
-            "BPMS:%TMIT", tag=self.beampath, sort_by="z"
-        )
-
-        # List of BPM EPICS names based on beampath
-        bpms_devices = meme.names.list_devices(
-            "BPMS:%TMIT", tag=self.beampath, sort_by="z"
-        )
-
-        # Make Dataframe with two columns: First is the Element (MAD) name
-        # Second column is the area
-        areas_bpn = [device.split(":")[1] for device in bpms_devices]
-        # If EPICS name uses "BPN" for area, instead use "BYP"
-        areas = ["BYP" if "BPN" in item else item for item in areas_bpn]
-        bpms_elements = pd.DataFrame({"Element": bpms_elements, "Area": areas})
-        return bpms_elements, bpms_devices
-
-    def create_bpms(self, bpms_elements):
-        """
-        Create BPM device objects for a given set of BPM elements.
-
-        This method iterates through a DataFrame of BPM elements
-        and their corresponding areas, creating BPM objects
-        using the `create_bpm` function.
-
-        Args:
-            bpms_elements (pd.DataFrame): A DataFrame containing BPM
-                                          element names and their
-                                          associated areas. Must
-                                          have columns:
-                                          - 'Element' (str): The BPM
-                                            element name.
-                                          - 'Area' (str): The area
-                                            associated with the BPM.
-
-        Returns:
-            dict: A dictionary where the keys are BPM element
+            self.bpms (dict): A dictionary where the keys are BPM element
             names and the values are the corresponding BPM
             objects created using `create_bpm`.
         """
-        bpm_obj_dict = {}
+        bpms = {}
+        all_bpms = self._load_yaml_config()
+        bpm_strs = all_bpms[self.beampath]
+        if bpm_strs is not None:
+            for bpm in bpm_strs:
+                name, area = bpm.split(":")
+                bpm = create_bpm(name=name, area=area)
+                if bpm is not None:
+                    bpms[name] = bpm
 
-        # Iterate through Dataframe of Elements and Areas
-        for _, row in bpms_elements.iterrows():
-            element = row["Element"]
-            area = row["Area"]
-
-            # Create an lcls-tools BPM object and append to dictionary
-            bpm = create_bpm(name=element, area=area)
-            if bpm is not None:
-                bpm_obj_dict[element] = bpm
-
-        if bpm_obj_dict:
-            return bpm_obj_dict
+        if bpms is not None:
+            self.bpms = bpms
         else:
             raise LookupError("No BPM objects could be created.")
 
@@ -168,7 +118,7 @@ class TMITLoss(Measurement):
         df = pd.DataFrame(data)
         return df.T
 
-    def get_bpm_idx(self, bpms_devices):
+    def get_bpm_idx(self):
         """
         Retrieve the index positions of BPMs before and after the wire for a
         given region.
@@ -187,18 +137,11 @@ class TMITLoss(Measurement):
                 - list: Indices of BPMs located **before** the wire.
                 - list: Indices of BPMs located **after** the wire.
         """
-        # Define valid regions
-        tmit_regions = {"HTR", "DIAG0", "COL1", "EMIT2", "DOG", "BYP", "SPD", "LTUS"}
-        if self.region not in tmit_regions:
-            raise ValueError(
-                f"Invalid region '{self.region}'. Must be one of {{valid_regions}}"
-            )
-
-        bpms_before_wire = self.my_wire.metadata.bpms_before_wire
-        bpms_after_wire = self.my_wire.metadata.bpms_after_wire
+        bpms_before_wire = self.beam_profile_device.metadata.bpms_before_wire
+        bpms_after_wire = self.beam_profile_device.metadata.bpms_after_wire
 
         # Create a lookup dictionary for index mapping
-        idx_map = {value: idx for idx, value in enumerate(bpms_devices)}
+        idx_map = {value: idx for idx, value in enumerate(self.bpms.keys)}
 
         # Find indices of BPMs before and after the wire
         idx_before = [idx_map[item] for item in bpms_before_wire if item in idx_map]
@@ -249,3 +192,20 @@ class TMITLoss(Measurement):
         # Compute TMIT Loss percentage
         tmit_loss = (mean_before - mean_after) * 100
         return tmit_loss
+
+    def _load_yaml_config(self):
+        file_to_open = (
+            Path(__file__).resolve().parent.parent
+            / "devices"
+            / "yaml"
+            / "tmit_loss_bpms.yaml"
+        )
+
+        if file_to_open.exists() is False:
+            msg = f"YAML config file {file_to_open} not found."
+            self.logger.error(msg)
+            return None
+
+        with open(file_to_open, "r") as f:
+            bpms = yaml.safe_load(f)
+            return bpms
