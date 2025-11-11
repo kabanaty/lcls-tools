@@ -24,8 +24,8 @@ class TMITLoss(Measurement):
 
     @model_validator(mode="after")
     def run_setup(self) -> "TMITLoss":
-        self.idx_before, self.idx_after = self.get_bpm_idx(bpms_devices)
-        self.bpms = self.create_bpms(bpms_elements)
+        self.idx_before, self.idx_after = self.get_bpm_idx()
+        self.bpms = self.create_bpms()
         return self
 
     def measure(self):
