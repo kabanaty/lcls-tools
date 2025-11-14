@@ -87,14 +87,14 @@ WS0H04:
     - LBLM01A:HTR
     - LBLM01B:HTR
   bpms_before_wire:
-    - BPMS:GUNB:925
-    - BPMS:HTR:120
-    - BPMS:HTR:320
+    - BPM2B
+    - BPM0H01
+    - BPM0H04
   bpms_after_wire:
-    - BPMS:HTR:760
-    - BPMS:HTR:830
-    - BPMS:HTR:860
-    - BPMS:HTR:960
+    - BPMH2
+    - BPMHD01
+    - BPMHD02
+    - BPMHD03
 
 WSDG01:
   detectors:
@@ -102,17 +102,17 @@ WSDG01:
     - LBLM01A:HTR
     - LBLM01B:HTR
   bpms_before_wire:
-    - BPMS:DIAG0:190
-    - BPMS:DIAG0:210
-    - BPMS:DIAG0:230
-    - BPMS:DIAG0:270
-    - BPMS:DIAG0:285
-    - BPMS:DIAG0:330
-    - BPMS:DIAG0:370
-    - BPMS:DIAG0:390
+    - BPMDG001
+    - BPMDG002
+    - BPMDG003
+    - BPMDG004
+    - BPMDG005
+    - BPMDG0RF
+    - BPMDG008
+    - BPMDG009
   bpms_after_wire:
-    - BPMS:DIAG0:470
-    - BPMS:DIAG0:520
+    - BPMDG011
+    - BPMDG012
 
 WSC104:
   detectors:
@@ -120,21 +120,21 @@ WSC104:
     - LBLM04A:L2B
     - TMITLOSS:COL1
   bpms_before_wire:
-    - BPMS:BC1B:125
-    - BPMS:BC1B:440
-    - BPMS:COL1:120
-    - BPMS:COL1:260
-    - BPMS:COL1:280
-    - BPMS:COL1:320
+    - BPM1C01
+    - BPM11B
+    - BPMC101
+    - BPMC102
+    - BPMC103
+    - BPMC104
   bpms_after_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
 
 WSC106:
   detectors:
@@ -142,21 +142,21 @@ WSC106:
     - LBLM04A:L2B
     - TMITLOSS:COL1
   bpms_before_wire:
-    - BPMS:BC1B:125
-    - BPMS:BC1B:440
-    - BPMS:COL1:120
-    - BPMS:COL1:260
-    - BPMS:COL1:280
-    - BPMS:COL1:320
+    - BPM1C01
+    - BPM11B
+    - BPMC101
+    - BPMC102
+    - BPMC103
+    - BPMC104
   bpms_after_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
 
 WSC108:
   detectors:
@@ -164,21 +164,21 @@ WSC108:
     - LBLM04A:L2B
     - TMITLOSS:COL1
   bpms_before_wire:
-    - BPMS:BC1B:125
-    - BPMS:BC1B:440
-    - BPMS:COL1:120
-    - BPMS:COL1:260
-    - BPMS:COL1:280
-    - BPMS:COL1:320
+    - BPM1C01
+    - BPM11B
+    - BPMC101
+    - BPMC102
+    - BPMC103
+    - BPMC104
   bpms_after_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
 
 WSC110:
   detectors:
@@ -186,21 +186,21 @@ WSC110:
     - LBLM04A:L2B
     - TMITLOSS:COL1
   bpms_before_wire:
-    - BPMS:BC1B:125
-    - BPMS:BC1B:440
-    - BPMS:COL1:120
-    - BPMS:COL1:260
-    - BPMS:COL1:280
-    - BPMS:COL1:320
+    - BPM1C01
+    - BPM11B
+    - BPMC101
+    - BPMC102
+    - BPMC103
+    - BPMC104
   bpms_after_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
 
 WSEMIT2:
   detectors:
@@ -208,17 +208,17 @@ WSEMIT2:
     - LBLM07A:L3B
     - TMITLOSS:EMIT2
   bpms_before_wire:
-    - BPMS:BC2B:150
-    - BPMS:BC2B:530
-    - BPMS:EMIT2:150
-    - BPMS:EMIT2:300
+    - BPM2C01
+    - BPM21B
+    - BPME201
+    - BPME202
   bpms_after_wire:
-    - BPMS:SPS:780
-    - BPMS:SPS:830
-    - BPMS:SPS:840
-    - BPMS:SLTS:150
-    - BPMS:SLTS:430
-    - BPMS:SLTS:460
+    - BPMSP7S
+    - BPMSP8S
+    - BPMSP9S
+    - BPMBP36
+    - BPMBP31
+    - BPMBP32
 
 WSBP1:
   detectors:
@@ -227,35 +227,35 @@ WSBP1:
     - LBLM11A_3:BYP
     - TMITLOSS:BYP
   bpms_before_wire:
-    - BPMS:L3B:3583
-    - BPMS:EXT:351
-    - BPMS:EXT:748
-    - BPMS:DOG:120
-    - BPMS:DOG:135
-    - BPMS:DOG:150
-    - BPMS:DOG:200
-    - BPMS:DOG:215
-    - BPMS:DOG:230
-    - BPMS:DOG:280
-    - BPMS:DOG:335
-    - BPMS:DOG:355
-    - BPMS:DOG:405
+    - CMB35
+    - BPMX01
+    - BPMX02
+    - BPMDOG1
+    - BPMDOG2
+    - BPMDOG3
+    - BPMDOG6
+    - BPMDOG7
+    - BPMDOG8
+    - BPML2P
+    - BPML3P
+    - BPML4P
+    - BPML5P
   bpms_after_wire:
-    - BPMS:BPN23:400
-    - BPMS:BPN24:400
-    - BPMS:BPN25:400
-    - BPMS:BPN26:400
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
-    - BPMS:SPD:570
-    - BPMS:SPD:700
-    - BPMS:SPD:955
+    - BPMBP23
+    - BPMBP24
+    - BPMBP25
+    - BPMBP26
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
+    - BPMDAS
+    - BPMSP2D
+    - BPMSP3D
 
 WSBP2:
   detectors:
@@ -264,35 +264,35 @@ WSBP2:
     - LBLM11A_3:BYP
     - TMITLOSS:BYP
   bpms_before_wire:
-    - BPMS:L3B:3583
-    - BPMS:EXT:351
-    - BPMS:EXT:748
-    - BPMS:DOG:120
-    - BPMS:DOG:135
-    - BPMS:DOG:150
-    - BPMS:DOG:200
-    - BPMS:DOG:215
-    - BPMS:DOG:230
-    - BPMS:DOG:280
-    - BPMS:DOG:335
-    - BPMS:DOG:355
-    - BPMS:DOG:405
+    - CMB35
+    - BPMX01
+    - BPMX02
+    - BPMDOG1
+    - BPMDOG2
+    - BPMDOG3
+    - BPMDOG6
+    - BPMDOG7
+    - BPMDOG8
+    - BPML2P
+    - BPML3P
+    - BPML4P
+    - BPML5P
   bpms_after_wire:
-    - BPMS:BPN23:400
-    - BPMS:BPN24:400
-    - BPMS:BPN25:400
-    - BPMS:BPN26:400
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
-    - BPMS:SPD:570
-    - BPMS:SPD:700
-    - BPMS:SPD:955
+    - BPMBP23
+    - BPMBP24
+    - BPMBP25
+    - BPMBP26
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
+    - BPMDAS
+    - BPMSP2D
+    - BPMSP3D
 
 WSBP3:
   detectors:
@@ -301,35 +301,35 @@ WSBP3:
     - LBLM11A_3:BYP
     - TMITLOSS:BYP
   bpms_before_wire:
-    - BPMS:L3B:3583
-    - BPMS:EXT:351
-    - BPMS:EXT:748
-    - BPMS:DOG:120
-    - BPMS:DOG:135
-    - BPMS:DOG:150
-    - BPMS:DOG:200
-    - BPMS:DOG:215
-    - BPMS:DOG:230
-    - BPMS:DOG:280
-    - BPMS:DOG:335
-    - BPMS:DOG:355
-    - BPMS:DOG:405
+    - CMB35
+    - BPMX01
+    - BPMX02
+    - BPMDOG1
+    - BPMDOG2
+    - BPMDOG3
+    - BPMDOG6
+    - BPMDOG7
+    - BPMDOG8
+    - BPML2P
+    - BPML3P
+    - BPML4P
+    - BPML5P
   bpms_after_wire:
-    - BPMS:BPN23:400
-    - BPMS:BPN24:400
-    - BPMS:BPN25:400
-    - BPMS:BPN26:400
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
-    - BPMS:SPD:570
-    - BPMS:SPD:700
-    - BPMS:SPD:955
+    - BPMBP23
+    - BPMBP24
+    - BPMBP25
+    - BPMBP26
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
+    - BPMDAS
+    - BPMSP2D
+    - BPMSP3D
 
 WSBP4:
   detectors:
@@ -338,50 +338,50 @@ WSBP4:
     - LBLM11A_3:BYP
     - TMITLOSS:BYP
   bpms_before_wire:
-    - BPMS:L3B:3583
-    - BPMS:EXT:351
-    - BPMS:EXT:748
-    - BPMS:DOG:120
-    - BPMS:DOG:135
-    - BPMS:DOG:150
-    - BPMS:DOG:200
-    - BPMS:DOG:215
-    - BPMS:DOG:230
-    - BPMS:DOG:280
-    - BPMS:DOG:335
-    - BPMS:DOG:355
-    - BPMS:DOG:405
+    - CMB35
+    - BPMX01
+    - BPMX02
+    - BPMDOG1
+    - BPMDOG2
+    - BPMDOG3
+    - BPMDOG6
+    - BPMDOG7
+    - BPMDOG8
+    - BPML2P
+    - BPML3P
+    - BPML4P
+    - BPML5P
   bpms_after_wire:
-    - BPMS:BPN23:400
-    - BPMS:BPN24:400
-    - BPMS:BPN25:400
-    - BPMS:BPN26:400
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
-    - BPMS:SPD:570
-    - BPMS:SPD:700
-    - BPMS:SPD:955
+    - BPMBP23
+    - BPMBP24
+    - BPMBP25
+    - BPMBP26
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
+    - BPMDAS
+    - BPMSP2D
+    - BPMSP3D
 
 WSSP1D:
   detectors:
     - LBLM22A:SPS
   bpms_before_wire:
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPD:420
-    - BPMS:SPD:525
-    - BPMS:SPD:570
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSPS
+    - BPMSP1D
+    - BPMDAS
   bpms_after_wire:
-    - BPMS:SPD:700
-    - BPMS:SPD:955
-    - BPMS:SLTD:625
+    - BPMSP2D
+    - BPMSP3D
+    - BPMSP4D
 
 WS31:
   detectors:
@@ -440,97 +440,97 @@ WS31B:
     - LBLMS32A:LTUS
     - TMITLOSS:LTUS
   bpms_before_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPS:572
-    - BPMS:SPS:580
-    - BPMS:SPS:640
-    - BPMS:SPS:710
-    - BPMS:SPS:770
-    - BPMS:SPS:780
-    - BPMS:SPS:830
-    - BPMS:SPS:840
-    - BPMS:SLTS:150
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSP1S
+    - BPMSP2S
+    - BPMSP3S
+    - BPMSP5S
+    - BPMSP6S
+    - BPMSP7S
+    - BPMSP8S
+    - BPMSP9S
+    - BPMBP36
   bpms_after_wire:
-    - BPMS:DMPS:381
-    - BPMS:DMPS:502
-    - BPMS:DMPS:693
+    - BPMUE2B
+    - BPMQDB
+    - BPMDDB
 
 WS32B:
   detectors:
     - LBLMS32A:LTUS
     - TMITLOSS:LTUS
   bpms_before_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPS:572
-    - BPMS:SPS:580
-    - BPMS:SPS:640
-    - BPMS:SPS:710
-    - BPMS:SPS:770
-    - BPMS:SPS:780
-    - BPMS:SPS:830
-    - BPMS:SPS:840
-    - BPMS:SLTS:150
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSP1S
+    - BPMSP2S
+    - BPMSP3S
+    - BPMSP5S
+    - BPMSP6S
+    - BPMSP7S
+    - BPMSP8S
+    - BPMSP9S
+    - BPMBP36
   bpms_after_wire:
-    - BPMS:DMPS:381
-    - BPMS:DMPS:502
-    - BPMS:DMPS:693
+    - BPMUE2B
+    - BPMQDB
+    - BPMDDB
 
 WS33B:
   detectors:
     - LBLMS32A:LTUS
     - TMITLOSS:LTUS
   bpms_before_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPS:572
-    - BPMS:SPS:580
-    - BPMS:SPS:640
-    - BPMS:SPS:710
-    - BPMS:SPS:770
-    - BPMS:SPS:780
-    - BPMS:SPS:830
-    - BPMS:SPS:840
-    - BPMS:SLTS:150
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSP1S
+    - BPMSP2S
+    - BPMSP3S
+    - BPMSP5S
+    - BPMSP6S
+    - BPMSP7S
+    - BPMSP8S
+    - BPMSP9S
+    - BPMBP36
   bpms_after_wire:
-    - BPMS:DMPS:381
-    - BPMS:DMPS:502
-    - BPMS:DMPS:693
+    - BPMUE2B
+    - BPMQDB
+    - BPMDDB
 
 WS34B:
   detectors:
     - LBLMS32A:LTUS
     - TMITLOSS:LTUS
   bpms_before_wire:
-    - BPMS:BPN27:400
-    - BPMS:BPN28:200
-    - BPMS:BPN28:400
-    - BPMS:SPD:135
-    - BPMS:SPD:255
-    - BPMS:SPD:340
-    - BPMS:SPS:572
-    - BPMS:SPS:580
-    - BPMS:SPS:640
-    - BPMS:SPS:710
-    - BPMS:SPS:770
-    - BPMS:SPS:780
-    - BPMS:SPS:830
-    - BPMS:SPS:840
-    - BPMS:SLTS:150
+    - BPMBP27
+    - BPMBP35
+    - BPMBP28
+    - BPMSPH
+    - BPMSP1
+    - BPMSP2
+    - BPMSP1S
+    - BPMSP2S
+    - BPMSP3S
+    - BPMSP5S
+    - BPMSP6S
+    - BPMSP7S
+    - BPMSP8S
+    - BPMSP9S
+    - BPMBP36
   bpms_after_wire:
-    - BPMS:DMPS:381
-    - BPMS:DMPS:502
-    - BPMS:DMPS:693
+    - BPMUE2B
+    - BPMQDB
+    - BPMDDB
