@@ -24,8 +24,8 @@ class TMITLoss(Measurement):
 
     @model_validator(mode="after")
     def run_setup(self) -> "TMITLoss":
+        self.create_bpms()
         self.idx_before, self.idx_after = self.get_bpm_idx()
-        self.bpms = self.create_bpms()
         return self
 
     def measure(self):
@@ -125,12 +125,6 @@ class TMITLoss(Measurement):
 
         This method selects predefined BPMs based on the specified region and
         finds their corresponding indices in `bpms_devices`.
-
-        Args:
-            region (str): The region of interest. Must be one of:
-                          - "HTR", "DIAG0", "COL1", "EMIT2", "BYP",
-                            "SPD", "LTUS".
-            bpms_devices (list): A list of BPM device names.
 
         Returns:
             tuple: A tuple containing:
