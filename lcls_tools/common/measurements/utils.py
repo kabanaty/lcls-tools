@@ -1,20 +1,6 @@
 from typing import Annotated
 import numpy as np
 from pydantic import BeforeValidator
-import time
-
-
-def calculate_statistics(data: np.ndarray, name):
-    return {
-        f"{name}_mean": np.mean(data),
-        f"{name}_std": np.std(data),
-        f"{name}_q05": np.quantile(data, 0.05),
-        f"{name}_q95": np.quantile(data, 0.95),
-    }
-
-
-def ensure_numpy_array(v):
-    return v if isinstance(v, np.ndarray) else np.array(v)
 
 
 def collect_with_size_check(
@@ -65,6 +51,19 @@ def collect_with_size_check(
         f"Unable to collect complete {collector_func} data for {device.name}. "
         f"Expected {expected_points} points but retrieved {size} after {max_retries} attempts."
     )
+
+
+def calculate_statistics(data: np.ndarray, name):
+    return {
+        f"{name}_mean": np.mean(data),
+        f"{name}_std": np.std(data),
+        f"{name}_q05": np.quantile(data, 0.05),
+        f"{name}_q95": np.quantile(data, 0.95),
+    }
+
+
+def ensure_numpy_array(v):
+    return v if isinstance(v, np.ndarray) else np.array(v)
 
 
 NDArrayAnnotatedType = Annotated[np.ndarray, BeforeValidator(ensure_numpy_array)]

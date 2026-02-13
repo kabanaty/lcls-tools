@@ -3,25 +3,10 @@ from lcls_tools.common.measurements.utils import NDArrayAnnotatedType
 from typing import Any, Optional, Dict, Tuple
 from datetime import datetime
 from lcls_tools.common.measurements.beam_profile import (
-    BeamProfileMeasurementResult,
+    BeamProfileCollectionResult,
 )
 import h5py
 import numpy as np
-
-
-class DetectorFit(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    mean: float
-    sigma: float
-    amplitude: float
-    offset: float
-    curve: NDArrayAnnotatedType
-    positions: NDArrayAnnotatedType
-
-
-class FitResult(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    detectors: Dict[str, DetectorFit]
 
 
 class MeasurementMetadata(BaseModel):
@@ -49,38 +34,31 @@ class ProfileMeasurement(BaseModel):
     profile_idxs: NDArrayAnnotatedType
 
 
-class WireBeamProfileMeasurementResult(BeamProfileMeasurementResult):
+class WireBPMCollectionResult(BeamProfileCollectionResult):
     """
-    Stores the results of a wire beam profile measurement.
+    Stores the results of a wire beam profile collection.
 
     Attributes:
         model_config: Allows use of non-standard types
                       like NDArrayAnnotatedType.
         profiles (dict): Dictionary of ProfileMeasurement objects
                          that contains raw data organized by profile.
-        raw_data (dict): Dictionary of device data as np.ndarrays.
-                         Keys are device names.
-        fit_result (dict): Nested dictionary of fit parameters by detector.
+        metadata (MeasurementMetadata): Metadata information related to
+                                        the measurement.
 
     Inherited Attributes:
-        rms_sizes (ndarray): Numpy array containing (x_rms, y_rms)
-                          in microns of default detector.
-        centroids : ndarray
-            Numpy array of centroids of the beam in microns.
-        total_intensities : ndarray
-            Numpy array of total intensities of the beam.
-        metadata : Any
-            Metadata information related to the measurement.
+        raw_data (dict): Dictionary of device data as np.ndarrays.
+                         Keys are device names.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     profiles: Dict[str, ProfileMeasurement]
     raw_data: Dict[str, Any]
-    fit_result: Dict[str, FitResult]
+    metadata: MeasurementMetadata
 
     def save_to_h5(self, filepath: str) -> None:
         """
-        Save wire beam profile measurement results to an HDF5 file.
+        Save wire beam profile collection results to an HDF5 file.
 
         The file structure is organized as follows:
         - /metadata: Measurement metadata (wire_name, area, beampath, etc.)
@@ -91,18 +69,7 @@ class WireBeamProfileMeasurementResult(BeamProfileMeasurementResult):
                 - values: Detector values
                 - units: Units of measurement (attribute)
                 - label: Measurement label (attribute)
-        - /fit_results/{detector_name}: Fit results by detector
-            - mean: Mean value (interpreted as beam centroid)
-            - sigma: Sigma value (interpreted as beam size)
-            - amplitude: Amplitude value
-            - offset: Offset value
-            - curve: Fitted curve data
-            - positions: Positions used in fit
         - /raw_data/{device_name}: Raw detector data
-        - /beam_properties: Computed beam properties
-            - rms_sizes: RMS beam sizes
-            - centroids: Beam centroids
-            - total_intensities: Total intensities
 
         Parameters
         ----------
@@ -118,17 +85,9 @@ class WireBeamProfileMeasurementResult(BeamProfileMeasurementResult):
             profiles_group = f.create_group("profiles")
             self._save_profiles(profiles_group)
 
-            # Save fit results
-            fit_group = f.create_group("fit_results")
-            self._save_fit_results(fit_group)
-
             # Save raw data
             raw_data_group = f.create_group("raw_data")
             self._save_raw_data(raw_data_group)
-
-            # Save beam properties
-            beam_group = f.create_group("beam_properties")
-            self._save_beam_properties(beam_group)
 
     def _save_metadata(self, group: h5py.Group) -> None:
         """Save measurement metadata as HDF5 attributes and datasets."""
@@ -165,7 +124,7 @@ class WireBeamProfileMeasurementResult(BeamProfileMeasurementResult):
             profile_group.create_dataset("positions", data=profile.positions)
 
             # Save profile indices
-            profile_group.create_dataset("profile_idxs", data=profile.profile_idxs)
+            profile_group.create_dataset("profile_indices", data=profile.profile_indices)
 
             # Save detector measurements
             detectors_group = profile_group.create_group("detectors")
@@ -177,24 +136,6 @@ class WireBeamProfileMeasurementResult(BeamProfileMeasurementResult):
                     detector_group.attrs["units"] = measurement.units
                 if measurement.label:
                     detector_group.attrs["label"] = measurement.label
-
-    def _save_fit_results(self, group: h5py.Group) -> None:
-        """Save fit results organized by detector."""
-        for detector_name, fit_result in self.fit_result.items():
-            detector_group = group.create_group(detector_name)
-
-            for fit_detector_name, detector_fit in fit_result.detectors.items():
-                fit_group = detector_group.create_group(fit_detector_name)
-
-                # Save scalar fit parameters
-                fit_group.attrs["mean"] = detector_fit.mean
-                fit_group.attrs["sigma"] = detector_fit.sigma
-                fit_group.attrs["amplitude"] = detector_fit.amplitude
-                fit_group.attrs["offset"] = detector_fit.offset
-
-                # Save curve and positions
-                fit_group.create_dataset("curve", data=detector_fit.curve)
-                fit_group.create_dataset("positions", data=detector_fit.positions)
 
     def _save_raw_data(self, group: h5py.Group) -> None:
         """Save raw detector and wire data."""
@@ -209,24 +150,8 @@ class WireBeamProfileMeasurementResult(BeamProfileMeasurementResult):
                     # Store as string representation if conversion fails
                     group.attrs[f"{device_name}_unsupported"] = str(data)
 
-    def _save_beam_properties(self, group: h5py.Group) -> None:
-        """Save computed beam properties."""
-        if self.rms_sizes is not None:
-            group.create_dataset("rms_sizes", data=self.rms_sizes)
 
-        if self.centroids is not None:
-            group.create_dataset("centroids", data=self.centroids)
-
-        if self.total_intensities is not None:
-            group.create_dataset("total_intensities", data=self.total_intensities)
-
-        if self.signal_to_noise_ratios is not None:
-            group.create_dataset(
-                "signal_to_noise_ratios", data=self.signal_to_noise_ratios
-            )
-
-
-def load_from_h5(filepath: str) -> WireBeamProfileMeasurementResult:
+def load_from_h5(filepath: str) -> WireBPMCollectionResult:
     """
     Load wire beam profile measurement results from an HDF5 file.
 
@@ -254,42 +179,12 @@ def load_from_h5(filepath: str) -> WireBeamProfileMeasurementResult:
         # Load profiles
         profiles = _load_profiles(f["profiles"])
 
-        # Load fit results
-        fit_result = _load_fit_results(f["fit_results"])
-
         # Load raw data
         raw_data = _load_raw_data(f["raw_data"])
 
-        # Load beam properties
-        rms_sizes = (
-            f["beam_properties"]["rms_sizes"][:]
-            if "rms_sizes" in f["beam_properties"]
-            else None
-        )
-        centroids = (
-            f["beam_properties"]["centroids"][:]
-            if "centroids" in f["beam_properties"]
-            else None
-        )
-        total_intensities = (
-            f["beam_properties"]["total_intensities"][:]
-            if "total_intensities" in f["beam_properties"]
-            else None
-        )
-        signal_to_noise_ratios = (
-            f["beam_properties"]["signal_to_noise_ratios"][:]
-            if "signal_to_noise_ratios" in f["beam_properties"]
-            else None
-        )
-
-    return WireBeamProfileMeasurementResult(
+    return WireBPMCollectionResult(
         profiles=profiles,
         raw_data=raw_data,
-        fit_result=fit_result,
-        rms_sizes=rms_sizes,
-        centroids=centroids,
-        total_intensities=total_intensities,
-        signal_to_noise_ratios=signal_to_noise_ratios,
         metadata=metadata,
     )
 
@@ -337,7 +232,7 @@ def _load_profiles(group: h5py.Group) -> Dict[str, ProfileMeasurement]:
 
         # Load positions and profile indices
         positions = profile_group["positions"][:]
-        profile_idxs = profile_group["profile_idxs"][:]
+        profile_indices = profile_group["profile_idxs"][:]
 
         # Load detector measurements
         detectors = {}
@@ -355,45 +250,10 @@ def _load_profiles(group: h5py.Group) -> Dict[str, ProfileMeasurement]:
         profiles[profile_name] = ProfileMeasurement(
             positions=positions,
             detectors=detectors,
-            profile_idxs=profile_idxs,
+            profile_indices=profile_indices,
         )
 
     return profiles
-
-
-def _load_fit_results(group: h5py.Group) -> Dict[str, FitResult]:
-    """Load fit results from HDF5 group."""
-    fit_results = {}
-
-    for detector_name in group.keys():
-        detector_group = group[detector_name]
-        detector_fits = {}
-
-        for fit_detector_name in detector_group.keys():
-            fit_group = detector_group[fit_detector_name]
-
-            # Load scalar fit parameters
-            mean = fit_group.attrs["mean"]
-            sigma = fit_group.attrs["sigma"]
-            amplitude = fit_group.attrs["amplitude"]
-            offset = fit_group.attrs["offset"]
-
-            # Load curve and positions
-            curve = fit_group["curve"][:]
-            positions = fit_group["positions"][:]
-
-            detector_fits[fit_detector_name] = DetectorFit(
-                mean=mean,
-                sigma=sigma,
-                amplitude=amplitude,
-                offset=offset,
-                curve=curve,
-                positions=positions,
-            )
-
-        fit_results[detector_name] = FitResult(detectors=detector_fits)
-
-    return fit_results
 
 
 def _load_raw_data(group: h5py.Group) -> Dict[str, Any]:
