@@ -1,7 +1,9 @@
+from typing import Dict
+
 from pydantic import BaseModel, ConfigDict
+
 from lcls_tools.common.measurements.beam_profile import BeamProfileMeasurementResult
 from lcls_tools.common.measurements.utils import NDArrayAnnotatedType
-from typing import Dict
 from lcls_tools.common.measurements.ws_collection_results import (
     WireMeasurementCollectionResult,
 )

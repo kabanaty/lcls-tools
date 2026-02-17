@@ -12,13 +12,13 @@ import logging
 import sys
 
 # Patch missing modules before importing ws_collection
-sys.modules['meme'] = MagicMock()
-sys.modules['meme.names'] = MagicMock()
-sys.modules['edef'] = MagicMock()
-sys.modules['edef.devices'] = MagicMock()
+sys.modules["meme"] = MagicMock()
+sys.modules["meme.names"] = MagicMock()
+sys.modules["edef"] = MagicMock()
+sys.modules["edef.devices"] = MagicMock()
 
 
-class MockWire():
+class MockWire:
     """Mock Wire device for testing."""
 
     def __init__(self, name="TEST_WIRE", area="TEST_AREA"):
@@ -73,31 +73,31 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         """Set up test fixtures."""
         # Patch external dependencies
         self.patch_custom_logger = patch(
-            'lcls_tools.common.measurements.ws_collection.custom_logger'
+            "lcls_tools.common.measurements.ws_collection.custom_logger"
         )
         self.mock_logger = self.patch_custom_logger.start()
-        self.mock_logger.return_value = logging.getLogger('test')
+        self.mock_logger.return_value = logging.getLogger("test")
 
         self.patch_reserve_buffer = patch(
-            'lcls_tools.common.measurements.ws_collection.reserve_buffer'
+            "lcls_tools.common.measurements.ws_collection.reserve_buffer"
         )
         self.mock_reserve_buffer = self.patch_reserve_buffer.start()
         self.mock_reserve_buffer.return_value = MockBuffer(number=1)
 
         self.patch_create_lblm = patch(
-            'lcls_tools.common.measurements.ws_collection.create_lblm'
+            "lcls_tools.common.measurements.ws_collection.create_lblm"
         )
         self.mock_create_lblm = self.patch_create_lblm.start()
         self.mock_create_lblm.return_value = MagicMock(name="LBLM_TEST")
 
         self.patch_create_pmt = patch(
-            'lcls_tools.common.measurements.ws_collection.create_pmt'
+            "lcls_tools.common.measurements.ws_collection.create_pmt"
         )
         self.mock_create_pmt = self.patch_create_pmt.start()
         self.mock_create_pmt.return_value = MagicMock(name="PMT_TEST")
 
         self.patch_tmit_loss = patch(
-            'lcls_tools.common.measurements.ws_collection.TMITLoss'
+            "lcls_tools.common.measurements.ws_collection.TMITLoss"
         )
         self.mock_tmit_loss = self.patch_tmit_loss.start()
 
@@ -126,26 +126,78 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         collection.detectors = [d.split(":")[0] for d in mock_wire.metadata.detectors]
         collection.data = None
         collection.profiles = None
-        collection.logger = logging.getLogger('test')
+        collection.logger = logging.getLogger("test")
 
         # Bind the real methods to the mock
-        collection.create_metadata = WireBPMCollection.create_metadata.__get__(collection, WireBPMCollection)
-        collection._active_profiles = WireBPMCollection._active_profiles.__get__(collection, WireBPMCollection)
-        collection._get_profile_range = WireBPMCollection._get_profile_range.__get__(collection, WireBPMCollection)
-        collection._mono_array = WireBPMCollection._mono_array.__get__(collection, WireBPMCollection)
-        collection._get_indices_in_range = WireBPMCollection._get_indices_in_range.__get__(collection, WireBPMCollection)
-        collection._validate_position_data = WireBPMCollection._validate_position_data.__get__(collection, WireBPMCollection)
-        collection._check_range_in_position = WireBPMCollection._check_range_in_position.__get__(collection, WireBPMCollection)
-        collection._get_units_for_device = WireBPMCollection._get_units_for_device.__get__(collection, WireBPMCollection)
-        collection._create_detector_measurement = WireBPMCollection._create_detector_measurement.__get__(collection, WireBPMCollection)
-        collection._create_profile_measurement = WireBPMCollection._create_profile_measurement.__get__(collection, WireBPMCollection)
-        collection._get_buffer_collection_method = WireBPMCollection._get_buffer_collection_method.__get__(collection, WireBPMCollection)
-        collection._wait_until = WireBPMCollection._wait_until.__get__(collection, WireBPMCollection)
-        collection._calc_buffer_points = WireBPMCollection._calc_buffer_points.__get__(collection, WireBPMCollection)
-        collection._get_monotonic_indices = WireBPMCollection._get_monotonic_indices.__get__(collection, WireBPMCollection)
-        collection._get_default_detector = WireBPMCollection._get_default_detector.__get__(collection, WireBPMCollection)
-        collection._reserve_buffer = WireBPMCollection._reserve_buffer.__get__(collection, WireBPMCollection)
-        collection._load_yaml_config = MagicMock(return_value=None)  # Mock yaml loading to return None
+        collection.create_metadata = WireBPMCollection.create_metadata.__get__(
+            collection, WireBPMCollection
+        )
+        collection._active_profiles = WireBPMCollection._active_profiles.__get__(
+            collection, WireBPMCollection
+        )
+        collection._get_profile_range = WireBPMCollection._get_profile_range.__get__(
+            collection, WireBPMCollection
+        )
+        collection._mono_array = WireBPMCollection._mono_array.__get__(
+            collection, WireBPMCollection
+        )
+        collection._get_indices_in_range = (
+            WireBPMCollection._get_indices_in_range.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._validate_position_data = (
+            WireBPMCollection._validate_position_data.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._check_range_in_position = (
+            WireBPMCollection._check_range_in_position.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._get_units_for_device = (
+            WireBPMCollection._get_units_for_device.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._create_detector_measurement = (
+            WireBPMCollection._create_detector_measurement.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._create_profile_measurement = (
+            WireBPMCollection._create_profile_measurement.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._get_buffer_collection_method = (
+            WireBPMCollection._get_buffer_collection_method.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._wait_until = WireBPMCollection._wait_until.__get__(
+            collection, WireBPMCollection
+        )
+        collection._calc_buffer_points = WireBPMCollection._calc_buffer_points.__get__(
+            collection, WireBPMCollection
+        )
+        collection._get_monotonic_indices = (
+            WireBPMCollection._get_monotonic_indices.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._get_default_detector = (
+            WireBPMCollection._get_default_detector.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._reserve_buffer = WireBPMCollection._reserve_buffer.__get__(
+            collection, WireBPMCollection
+        )
+        collection._load_yaml_config = MagicMock(
+            return_value=None
+        )  # Mock yaml loading to return None
 
         return collection
 
@@ -166,7 +218,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         self.collection.my_wire.use_u_wire = True
 
         active = self.collection._active_profiles()
-        self.assertEqual(active, ['x', 'y', 'u'])
+        self.assertEqual(active, ["x", "y", "u"])
 
     def test_active_profiles_selective(self):
         """Test _active_profiles with selective enablement."""
@@ -175,7 +227,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         self.collection.my_wire.use_u_wire = True
 
         active = self.collection._active_profiles()
-        self.assertEqual(active, ['x', 'u'])
+        self.assertEqual(active, ["x", "u"])
 
     def test_active_profiles_only_x(self):
         """Test _active_profiles with only X enabled."""
@@ -184,7 +236,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         self.collection.my_wire.use_u_wire = False
 
         active = self.collection._active_profiles()
-        self.assertEqual(active, ['x'])
+        self.assertEqual(active, ["x"])
 
     def test_mono_array_monotonic_increasing(self):
         """Test _mono_array with monotonically increasing data."""
@@ -216,9 +268,9 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
 
     def test_get_profile_range(self):
         """Test _get_profile_range method."""
-        x_range = self.collection._get_profile_range('x')
-        y_range = self.collection._get_profile_range('y')
-        u_range = self.collection._get_profile_range('u')
+        x_range = self.collection._get_profile_range("x")
+        y_range = self.collection._get_profile_range("y")
+        u_range = self.collection._get_profile_range("u")
 
         self.assertEqual(x_range, self.collection.my_wire.x_range)
         self.assertEqual(y_range, self.collection.my_wire.y_range)
@@ -261,7 +313,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         position_data = np.array([100, 150, 200, 250, 300])
 
         # Should not raise
-        self.collection._check_range_in_position(position_data, 'x', (100, 250))
+        self.collection._check_range_in_position(position_data, "x", (100, 250))
 
     def test_check_range_in_position_insufficient(self):
         """Test _check_range_in_position when range minimum not reached."""
@@ -269,7 +321,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
 
         # Should raise RuntimeError when max position < range minimum
         with self.assertRaises(RuntimeError):
-            self.collection._check_range_in_position(position_data, 'x', (250, 400))
+            self.collection._check_range_in_position(position_data, "x", (250, 400))
 
     def test_get_units_for_device_tmitloss(self):
         """Test _get_units_for_device for TMITLOSS."""
@@ -300,11 +352,13 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         positions = np.array([100, 150, 200])
         detectors = {
             "LBLM": DetectorMeasurement(values=np.array([1, 2, 3]), units="counts"),
-            "PMT": DetectorMeasurement(values=np.array([4, 5, 6]), units="counts")
+            "PMT": DetectorMeasurement(values=np.array([4, 5, 6]), units="counts"),
         }
         indices = np.array([0, 1, 2])
 
-        measurement = self.collection._create_profile_measurement(positions, detectors, indices)
+        measurement = self.collection._create_profile_measurement(
+            positions, detectors, indices
+        )
 
         self.assertIsInstance(measurement, ProfileMeasurement)
         np.testing.assert_array_equal(measurement.positions, positions)
@@ -313,7 +367,9 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
 
     def test_get_buffer_collection_method_wire(self):
         """Test _get_buffer_collection_method for wire device."""
-        method = self.collection._get_buffer_collection_method(self.collection.my_wire.name)
+        method = self.collection._get_buffer_collection_method(
+            self.collection.my_wire.name
+        )
         self.assertEqual(method, "position_buffer")
 
     def test_get_buffer_collection_method_lblm(self):
@@ -334,6 +390,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
     def test_wait_until_condition_true(self):
         """Test _wait_until when condition becomes true."""
         call_count = [0]
+
         def condition():
             call_count[0] += 1
             return call_count[0] >= 3  # Return True on 3rd call
@@ -344,6 +401,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
 
     def test_wait_until_timeout(self):
         """Test _wait_until when timeout expires."""
+
         def condition():
             return False  # Never True
 
@@ -412,19 +470,19 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
 
         # Patch external dependencies
         self.patch_custom_logger = patch(
-            'lcls_tools.common.measurements.ws_collection.custom_logger'
+            "lcls_tools.common.measurements.ws_collection.custom_logger"
         )
         self.mock_logger = self.patch_custom_logger.start()
-        self.mock_logger.return_value = logging.getLogger('test')
+        self.mock_logger.return_value = logging.getLogger("test")
 
         self.patch_reserve_buffer = patch(
-            'lcls_tools.common.measurements.ws_collection.reserve_buffer'
+            "lcls_tools.common.measurements.ws_collection.reserve_buffer"
         )
         self.mock_reserve_buffer = self.patch_reserve_buffer.start()
         self.mock_reserve_buffer.return_value = MockBuffer(number=1)
 
         self.patch_create_lblm = patch(
-            'lcls_tools.common.measurements.ws_collection.create_lblm'
+            "lcls_tools.common.measurements.ws_collection.create_lblm"
         )
         self.mock_create_lblm = self.patch_create_lblm.start()
         mock_lblm = MagicMock(name="LBLM_TEST")
@@ -432,7 +490,7 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
         self.mock_create_lblm.return_value = mock_lblm
 
         self.patch_create_pmt = patch(
-            'lcls_tools.common.measurements.ws_collection.create_pmt'
+            "lcls_tools.common.measurements.ws_collection.create_pmt"
         )
         self.mock_create_pmt = self.patch_create_pmt.start()
         self.mock_create_pmt.return_value = MagicMock(name="PMT_TEST")
@@ -455,20 +513,48 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
         collection.beampath = "GUNB"
         collection.my_buffer = MockBuffer(number=1)
         collection.devices = {self.mock_wire.name: self.mock_wire}
-        collection.detectors = [d.split(":")[0] for d in self.mock_wire.metadata.detectors]
+        collection.detectors = [
+            d.split(":")[0] for d in self.mock_wire.metadata.detectors
+        ]
         collection.data = None
         collection.profiles = None
-        collection.logger = logging.getLogger('test')
+        collection.logger = logging.getLogger("test")
 
         # Bind real methods
-        collection.get_profile_range_indices = WireBPMCollection.get_profile_range_indices.__get__(collection, WireBPMCollection)
-        collection._active_profiles = WireBPMCollection._active_profiles.__get__(collection, WireBPMCollection)
-        collection._get_profile_range = WireBPMCollection._get_profile_range.__get__(collection, WireBPMCollection)
-        collection._validate_position_data = WireBPMCollection._validate_position_data.__get__(collection, WireBPMCollection)
-        collection._check_range_in_position = WireBPMCollection._check_range_in_position.__get__(collection, WireBPMCollection)
-        collection._get_indices_in_range = WireBPMCollection._get_indices_in_range.__get__(collection, WireBPMCollection)
-        collection._get_monotonic_indices = WireBPMCollection._get_monotonic_indices.__get__(collection, WireBPMCollection)
-        collection._mono_array = WireBPMCollection._mono_array.__get__(collection, WireBPMCollection)
+        collection.get_profile_range_indices = (
+            WireBPMCollection.get_profile_range_indices.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._active_profiles = WireBPMCollection._active_profiles.__get__(
+            collection, WireBPMCollection
+        )
+        collection._get_profile_range = WireBPMCollection._get_profile_range.__get__(
+            collection, WireBPMCollection
+        )
+        collection._validate_position_data = (
+            WireBPMCollection._validate_position_data.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._check_range_in_position = (
+            WireBPMCollection._check_range_in_position.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._get_indices_in_range = (
+            WireBPMCollection._get_indices_in_range.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._get_monotonic_indices = (
+            WireBPMCollection._get_monotonic_indices.__get__(
+                collection, WireBPMCollection
+            )
+        )
+        collection._mono_array = WireBPMCollection._mono_array.__get__(
+            collection, WireBPMCollection
+        )
 
         return collection
 
@@ -481,43 +567,57 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
         profile_indices = self.collection.get_profile_range_indices()
 
         # Should have indices for each profile
-        self.assertIn('x', profile_indices)
-        self.assertIn('y', profile_indices)
-        self.assertIn('u', profile_indices)
+        self.assertIn("x", profile_indices)
+        self.assertIn("y", profile_indices)
+        self.assertIn("u", profile_indices)
 
         # Each profile should have some indices
-        for profile in ['x', 'y', 'u']:
+        for profile in ["x", "y", "u"]:
             self.assertGreater(len(profile_indices[profile]), 0)
 
     def test_organize_data_by_profile_integration(self):
         """Test organize_data_by_profile with realistic workflow."""
         # Bind organize method
-        self.collection.organize_data_by_profile = WireBPMCollection.organize_data_by_profile.__get__(self.collection, WireBPMCollection)
-        self.collection._create_detector_measurement = WireBPMCollection._create_detector_measurement.__get__(self.collection, WireBPMCollection)
-        self.collection._create_profile_measurement = WireBPMCollection._create_profile_measurement.__get__(self.collection, WireBPMCollection)
-        self.collection._get_units_for_device = WireBPMCollection._get_units_for_device.__get__(self.collection, WireBPMCollection)
+        self.collection.organize_data_by_profile = (
+            WireBPMCollection.organize_data_by_profile.__get__(
+                self.collection, WireBPMCollection
+            )
+        )
+        self.collection._create_detector_measurement = (
+            WireBPMCollection._create_detector_measurement.__get__(
+                self.collection, WireBPMCollection
+            )
+        )
+        self.collection._create_profile_measurement = (
+            WireBPMCollection._create_profile_measurement.__get__(
+                self.collection, WireBPMCollection
+            )
+        )
+        self.collection._get_units_for_device = (
+            WireBPMCollection._get_units_for_device.__get__(
+                self.collection, WireBPMCollection
+            )
+        )
 
         # Set up mock data
         mock_detector = MagicMock()
         mock_detector.measure = MagicMock(return_value=np.arange(3))
         self.collection.devices = {
             self.mock_wire.name: self.mock_wire,
-            "LBLM": mock_detector
+            "LBLM": mock_detector,
         }
 
         self.collection.data = {
             self.mock_wire.name: np.array([100, 150, 200]),
-            "LBLM": np.array([1, 2, 3])
+            "LBLM": np.array([1, 2, 3]),
         }
 
         # Set up profile indices
-        profile_indices = {
-            'x': np.array([0, 1, 2])
-        }
+        profile_indices = {"x": np.array([0, 1, 2])}
 
         profiles = self.collection.organize_data_by_profile(profile_indices)
 
         # Check structure
-        self.assertIn('x', profiles)
-        self.assertIsInstance(profiles['x'], ProfileMeasurement)
-        self.assertIn("LBLM", profiles['x'].detectors)
+        self.assertIn("x", profiles)
+        self.assertIsInstance(profiles["x"], ProfileMeasurement)
+        self.assertIn("LBLM", profiles["x"].detectors)

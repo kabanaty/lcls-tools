@@ -1,44 +1,41 @@
-from lcls_tools.common.measurements.beam_profile import BeamProfileMeasurement
-from lcls_tools.common.devices.wire import Wire
 import logging
-from pathlib import Path
-from typing import Optional
-from lcls_tools.common.devices.reader import create_lblm, create_pmt
 import time
 from datetime import datetime
-from pydantic import model_validator
-from lcls_tools.common.measurements.tmit_loss import TMITLoss
-from lcls_tools.common.measurements.ws_collection_results import (
-    WireMeasurementCollectionResult,
-    MeasurementMetadata,
-)
-import yaml
+from pathlib import Path
+from typing import Optional
+
 import numpy as np
+import yaml
+from pydantic import model_validator
 from typing_extensions import Self
-from lcls_tools.common.measurements.buffer_reservation import reserve_buffer
-from lcls_tools.common.measurements.utils import (
-    collect_with_size_check,
-)
+
+from lcls_tools.common.devices.reader import create_lblm, create_pmt
+from lcls_tools.common.devices.wire import Wire
 from lcls_tools.common.logger.file_logger import custom_logger
+from lcls_tools.common.measurements.beam_profile import BeamProfileMeasurement
+from lcls_tools.common.measurements.buffer_reservation import reserve_buffer
+from lcls_tools.common.measurements.tmit_loss import TMITLoss
+from lcls_tools.common.measurements.utils import collect_with_size_check
+from lcls_tools.common.measurements.ws_collection_results import (
+    MeasurementMetadata,
+    WireMeasurementCollectionResult,
+)
 
 
 class WireMeasurementCollection(BeamProfileMeasurement):
     """
-    Performs a wire scan measurement and splits raw data
-    into beam profiles.
+    Collects wire scan measurement data via motor motion and BSA buffer.
+
+    Moves the wire and acquires synchronized detector data without organizing
+    or fitting. Raw data is returned for downstream analysis.
 
     Attributes:
-        name (str): Scan object name required by Measurement class.
-        my_wire (Wire): Wire device used to perform the scan.
-        beampath (str): Beamline path identifier for buffer and device
-                        selection.
-        my_buffer (edef.BSABuffer): edef buffer object to manage data
-                                    acquisition.
-        devices (dict): Holds all slac-tools device objects associated
-                        with this measurement (wires, detectors, bpms, etc).
-        data (dict): Raw data object for all devices defined above.
-        profile_measurements (dict): Collected data organized by profile.
-        logger (logging.Logger): Object for log file management.
+        beam_profile_device (Wire): Wire device for the scan.
+        beampath (str): Beamline identifier for buffer and device selection.
+        my_buffer: BSA buffer managing data acquisition.
+        devices (dict): Device objects (wire, detectors) used in the scan.
+        data (dict): Raw buffered data by device name.
+        logger (logging.Logger): File-based measurement logger.
     """
 
     name: str = "Wire Beam Profile Measurement"
@@ -51,7 +48,6 @@ class WireMeasurementCollection(BeamProfileMeasurement):
     devices: Optional[dict] = None
     detectors: Optional[list] = None
     data: Optional[dict] = None
-    profiles: Optional[dict] = None
     logger: Optional[logging.Logger] = None
 
     # alias so beam_profile_device can also be accessed with name my_wire
@@ -79,25 +75,16 @@ class WireMeasurementCollection(BeamProfileMeasurement):
 
     def measure(self) -> WireMeasurementCollectionResult:
         """
-        Perform a wire scan measurement and organize data into beam profiles.
+        Execute wire scan: move wire, acquire detector data from BSA buffer.
 
-        Executes a complete wire scan: reserves a BSA buffer, commands the wire
-        to motion, collects synchronized detector data across all profiles,
-        separates the raw data by profile (x, y, u), and returns organized
-        measurements without fitting or post-processing.
+        Returns raw measurement data without organization or fitting.
 
         Returns
         -------
-        WireBeamProfileMeasurementResult
-            Raw measurement data organized by profile, including:
-            - profiles: Dict of ProfileMeasurement objects (positions and detector values per profile)
-            - raw_data: Complete raw buffered data from all devices
-            - metadata: Measurement timestamp, wire name, area, beampath, and detector list
-
-        Notes
-        -----
-        Fitting and RMS size calculation are performed by downstream analysis
-        code. This method focuses on hardware orchestration and data organization.
+        WireMeasurementCollectionResult
+            Raw data and metadata, including:
+            - raw_data: Buffered position and detector values by device name
+            - metadata: Timestamp, wire name, area, beampath, and detector list
         """
         # Reserve a new buffer if necessary
         if self.my_buffer is None:

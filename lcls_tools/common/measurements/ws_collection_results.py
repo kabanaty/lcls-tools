@@ -1,12 +1,11 @@
-from pydantic import BaseModel, ConfigDict
-from lcls_tools.common.measurements.utils import NDArrayAnnotatedType
-from typing import Any, Optional, Dict, Tuple
 from datetime import datetime
-from lcls_tools.common.measurements.beam_profile import (
-    BeamProfileCollectionResult,
-)
+from typing import Any, Dict, Optional, Tuple
+
 import h5py
 import numpy as np
+from pydantic import BaseModel, ConfigDict
+
+from lcls_tools.common.measurements.beam_profile import BeamProfileCollectionResult
 
 
 class MeasurementMetadata(BaseModel):

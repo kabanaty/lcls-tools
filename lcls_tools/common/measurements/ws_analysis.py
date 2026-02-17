@@ -1,40 +1,39 @@
-from typing import Any, Dict
+import numpy as np
 from pydantic import ConfigDict
+
 import lcls_tools.common.model.gaussian as gaussian
 from lcls_tools.common.measurements.beam_profile import BeamProfileAnalysis
 from lcls_tools.common.measurements.ws_analysis_results import (
-    DetectorProfileMeasurement,
-    ProfileMeasurement,
-    FitResult,
     DetectorFit,
-    WireMeasurementAnalysisResult
+    DetectorProfileMeasurement,
+    FitResult,
+    ProfileMeasurement,
+    WireMeasurementAnalysisResult,
 )
-import numpy as np
 
 
 class WireMeasurementAnalysis(BeamProfileAnalysis):
     """
-    Analyzes wire scan measurement data and performs Gaussian fitting.
+    Analyzes wire scan data: organizes by profile, fits Gaussian curves, extracts beam parameters.
 
-    Takes raw wire beam profile measurement results and applies curve fitting
-    to extract beam parameters (centroid, RMS size, amplitude) for each detector
-    and profile.
+    Takes raw wire measurement data and performs curve fitting to extract
+    centroid, RMS size, and amplitude for each detector and profile.
 
     Attributes:
-        collection_result (WireMeasurementCollectionResult): Raw measurement data from wire scan.
-        logger (logging.Logger): Logger for diagnostic messages.
+        collection_result: Raw measurement data from wire scan.
+        logger: Logger for diagnostic messages.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def analyze(self) -> Dict[str, Any]:
+    def analyze(self) -> WireMeasurementAnalysisResult:
         """
-        Perform complete analysis: fit profiles and extract RMS sizes.
+        Organize data by profile, fit Gaussian curves, extract RMS sizes.
 
-        Returns:
-            dict: Analysis results containing:
-                - fit_result: Gaussian fit parameters per profile and detector
-                - rms_sizes: Computed RMS beam sizes (if both x and y profiles present)
+        Returns
+        -------
+        WireMeasurementAnalysisResult
+            Fit results per profile and detector, RMS beam sizes, and organized data.
         """
         profile_indices = self.get_profile_range_indices()
         profile_measurements = self.organize_data_by_profile(profile_indices)
@@ -57,7 +56,9 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Returns:
             dict: Profile keys ('x', 'y', 'u') with lists of index arrays.
         """
-        position_data = self.collection_result.raw_data[self.collection_result.metadata.wire_name]
+        position_data = self.collection_result.raw_data[
+            self.collection_result.metadata.wire_name
+        ]
 
         # Single validation pass
         self._validate_position_data(position_data)
@@ -120,7 +121,8 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         detectors = list(self.collection_result.metadata.detectors)
 
         fit_result = {
-            profile: self._fit_profile(profile_measurements, profile, detectors) for profile in profiles
+            profile: self._fit_profile(profile_measurements, profile, detectors)
+            for profile in profiles
         }
 
         return fit_result
@@ -211,7 +213,9 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
     ) -> DetectorProfileMeasurement:
         """Create a DetectorProfileMeasurement object for a given device and data slice."""
         units = self._get_units_for_device(device_name)
-        return DetectorProfileMeasurement(values=data_slice, units=units, label=device_name)
+        return DetectorProfileMeasurement(
+            values=data_slice, units=units, label=device_name
+        )
 
     def _create_profile_measurement(
         self, positions: np.ndarray, detectors: dict, profile_indices: np.ndarray
@@ -330,7 +334,9 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             positions=peak_window[0],
         )
 
-    def _fit_profile(self, profile_measurements, profile: str, detectors: list) -> FitResult:
+    def _fit_profile(
+        self, profile_measurements, profile: str, detectors: list
+    ) -> FitResult:
         """
         Fit all detectors within a single profile.
 
