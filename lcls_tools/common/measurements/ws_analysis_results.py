@@ -34,10 +34,10 @@ class DetectorFit(BaseModel):
 class FitResult(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     detectors: Dict[str, DetectorFit]
-    collection_results: WireMeasurementCollectionResult
-    
 
-class WireMeasurementAnalysisResults(BeamProfileMeasurementResult):
+
+class WireMeasurementAnalysisResult(BeamProfileMeasurementResult):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    fit_result: FitResult
-    collection_results: WireMeasurementCollectionResult
+    fit_result: Dict[str, FitResult]
+    collection_result: WireMeasurementCollectionResult
+    profiles: Dict[str, ProfileMeasurement]

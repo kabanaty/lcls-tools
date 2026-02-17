@@ -10,8 +10,6 @@ from pydantic import model_validator
 from lcls_tools.common.measurements.tmit_loss import TMITLoss
 from lcls_tools.common.measurements.ws_collection_results import (
     WireMeasurementCollectionResult,
-    ProfileMeasurement,
-    DetectorMeasurement,
     MeasurementMetadata,
 )
 import yaml
@@ -116,13 +114,6 @@ class WireMeasurementCollection(BeamProfileMeasurement):
 
         # Get position and detector data from the buffer
         self.data = self.get_data_from_buffer()
-
-        # Determine the profile range indices
-        # e.g., u range = (13000, 18000) -> position_data[100:450]
-        profile_indices = self.get_profile_range_indices()
-
-        # Separate detector data by profile
-        self.profiles = self.organize_data_by_profile(profile_indices)
 
         # Release EDEF/BSA
         self.logger.info("Releasing BSA buffer.")
@@ -300,6 +291,7 @@ class WireMeasurementCollection(BeamProfileMeasurement):
             scan_ranges=scan_ranges,
             timestamp=datetime.now(),
             active_profiles=self._active_profiles(),
+            install_angle=self.my_wire.install_angle,
             notes=None,
         )
 

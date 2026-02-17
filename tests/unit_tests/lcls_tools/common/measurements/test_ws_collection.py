@@ -521,4 +521,3 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
         self.assertIn('x', profiles)
         self.assertIsInstance(profiles['x'], ProfileMeasurement)
         self.assertIn("LBLM", profiles['x'].detectors)
-

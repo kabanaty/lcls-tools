@@ -18,6 +18,7 @@ class MeasurementMetadata(BaseModel):
     scan_ranges: Dict[str, Tuple[int, int]]
     timestamp: datetime
     active_profiles: list[str]
+    install_angle: float
     notes: Optional[str] = None
 
 
@@ -46,13 +47,6 @@ class WireMeasurementCollectionResult(BeamProfileCollectionResult):
 
         The file structure is organized as follows:
         - /metadata: Measurement metadata (wire_name, area, beampath, etc.)
-        - /profiles/{profile_name}: Profile measurements
-            - positions: Position data for the profile
-            - profile_idxs: Profile range indices
-            - detectors/{detector_name}: Detector measurement data
-                - values: Detector values
-                - units: Units of measurement (attribute)
-                - label: Measurement label (attribute)
         - /raw_data/{device_name}: Raw detector data
 
         Parameters
@@ -64,10 +58,6 @@ class WireMeasurementCollectionResult(BeamProfileCollectionResult):
             # Save metadata
             metadata_group = f.create_group("metadata")
             self._save_metadata(metadata_group)
-
-            # Save profiles
-            profiles_group = f.create_group("profiles")
-            self._save_profiles(profiles_group)
 
             # Save raw data
             raw_data_group = f.create_group("raw_data")
@@ -83,6 +73,8 @@ class WireMeasurementCollectionResult(BeamProfileCollectionResult):
         group.attrs["beampath"] = meta.beampath
         group.attrs["default_detector"] = meta.default_detector
         group.attrs["timestamp"] = meta.timestamp.isoformat()
+        group.attrs["active_profiles"] = meta.active_profiles
+        group.attrs["install_angle"] = meta.install_angle
 
         if meta.notes:
             group.attrs["notes"] = meta.notes
@@ -98,30 +90,6 @@ class WireMeasurementCollectionResult(BeamProfileCollectionResult):
         for axis_name, (start, end) in meta.scan_ranges.items():
             scan_ranges_group.attrs[f"{axis_name}_start"] = start
             scan_ranges_group.attrs[f"{axis_name}_end"] = end
-
-    def _save_profiles(self, group: h5py.Group) -> None:
-        """Save profile measurement data."""
-        for profile_name, profile in self.profiles.items():
-            profile_group = group.create_group(profile_name)
-
-            # Save positions
-            profile_group.create_dataset("positions", data=profile.positions)
-
-            # Save profile indices
-            profile_group.create_dataset(
-                "profile_indices", data=profile.profile_indices
-            )
-
-            # Save detector measurements
-            detectors_group = profile_group.create_group("detectors")
-            for detector_name, measurement in profile.detectors.items():
-                detector_group = detectors_group.create_group(detector_name)
-                detector_group.create_dataset("values", data=measurement.values)
-
-                if measurement.units:
-                    detector_group.attrs["units"] = measurement.units
-                if measurement.label:
-                    detector_group.attrs["label"] = measurement.label
 
     def _save_raw_data(self, group: h5py.Group) -> None:
         """Save raw detector and wire data."""
@@ -162,14 +130,10 @@ def load_from_h5(filepath: str) -> WireMeasurementCollectionResult:
         # Load metadata
         metadata = _load_metadata(f["metadata"])
 
-        # Load profiles
-        profiles = _load_profiles(f["profiles"])
-
         # Load raw data
         raw_data = _load_raw_data(f["raw_data"])
 
-    return WireBPMCollectionResult(
-        profiles=profiles,
+    return WireMeasurementCollectionResult(
         raw_data=raw_data,
         metadata=metadata,
     )
@@ -184,6 +148,8 @@ def _load_metadata(group: h5py.Group) -> MeasurementMetadata:
     default_detector = group.attrs["default_detector"]
     timestamp_str = group.attrs["timestamp"]
     timestamp = datetime.fromisoformat(timestamp_str)
+    active_profiles = group.attrs["active_profiles"]
+    install_angle = group.attrs["install_angle"]
     notes = group.attrs.get("notes", None)
 
     # Load detectors list
@@ -205,41 +171,10 @@ def _load_metadata(group: h5py.Group) -> MeasurementMetadata:
         default_detector=default_detector,
         scan_ranges=scan_ranges,
         timestamp=timestamp,
+        active_profiles=active_profiles,
+        install_angle=install_angle,
         notes=notes,
     )
-
-
-def _load_profiles(group: h5py.Group) -> Dict[str, ProfileMeasurement]:
-    """Load profile measurement data from HDF5 group."""
-    profiles = {}
-
-    for profile_name in group.keys():
-        profile_group = group[profile_name]
-
-        # Load positions and profile indices
-        positions = profile_group["positions"][:]
-        profile_indices = profile_group["profile_idxs"][:]
-
-        # Load detector measurements
-        detectors = {}
-        detectors_group = profile_group["detectors"]
-        for detector_name in detectors_group.keys():
-            detector_group = detectors_group[detector_name]
-            values = detector_group["values"][:]
-            units = detector_group.attrs.get("units", None)
-            label = detector_group.attrs.get("label", None)
-
-            detectors[detector_name] = DetectorMeasurement(
-                values=values, units=units, label=label
-            )
-
-        profiles[profile_name] = ProfileMeasurement(
-            positions=positions,
-            detectors=detectors,
-            profile_indices=profile_indices,
-        )
-
-    return profiles
 
 
 def _load_raw_data(group: h5py.Group) -> Dict[str, Any]:

@@ -7,6 +7,7 @@ from lcls_tools.common.measurements.ws_analysis_results import (
     ProfileMeasurement,
     FitResult,
     DetectorFit,
+    WireMeasurementAnalysisResult
 )
 import numpy as np
 
@@ -41,10 +42,13 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         fit_result = self.fit_data_by_profile(profile_measurements=profile_measurements)
         rms_sizes = self.get_rms_sizes(fit_result)
 
-        return {
-            "fit_result": fit_result,
-            "rms_sizes": rms_sizes,
-        }
+        return WireMeasurementAnalysisResult(
+            fit_result=fit_result,
+            rms_sizes=rms_sizes,
+            collection_result=self.collection_result,
+            metadata=self.collection_result.metadata,
+            profiles=profile_measurements,
+        )
 
     def get_profile_range_indices(self) -> dict:
         """
@@ -53,7 +57,6 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Returns:
             dict: Profile keys ('x', 'y', 'u') with lists of index arrays.
         """
-        self.logger.info("Getting profile range indices...")
         position_data = self.collection_result.raw_data[self.collection_result.metadata.wire_name]
 
         # Single validation pass
@@ -61,7 +64,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
 
         profile_indices = {}
         for p in self.collection_result.metadata.active_profiles:
-            profile_range = self._get_profile_range(p)
+            profile_range = self.collection_result.metadata.scan_ranges[p]
             self._check_range_in_position(position_data, p, profile_range)
 
             indices = self._get_indices_in_range(
@@ -72,7 +75,6 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
 
             profile_indices[p] = monotonic_indices
 
-        self.logger.info("Profile range indices collected.")
         return profile_indices
 
     def organize_data_by_profile(self, profile_indices) -> dict:
@@ -83,9 +85,9 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             dict: Nested dict with profiles as keys and device
                   data per profile.
         """
-        self.logger.info("Creating profile data objects...")
         profile_measurements = {}
-
+        devices = self.collection_result.metadata.detectors
+        devices.append(self.collection_result.metadata.wire_name)
         for profile, index in profile_indices.items():
             detectors = {}
             positions = None
@@ -103,7 +105,6 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
                 positions, detectors, index
             )
 
-        self.logger.info("Profile data objects created.")
         return profile_measurements
 
     def fit_data_by_profile(self, profile_measurements) -> dict:
@@ -115,16 +116,13 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Returns:
             dict: Fit results organized by profile and detector.
         """
-        self.logger.info("Fitting profile data...")
-
         profiles = list(profile_measurements.keys())
         detectors = list(self.collection_result.metadata.detectors)
 
         fit_result = {
-            profile: self._fit_profile(profile, detectors) for profile in profiles
+            profile: self._fit_profile(profile_measurements, profile, detectors) for profile in profiles
         }
 
-        self.logger.info("Profile data fit.")
         return fit_result
 
     def get_rms_sizes(self, fit_result: dict) -> tuple | None:
@@ -144,19 +142,15 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             x_fit = fit_result["x"].detectors[default_det]
             y_fit = fit_result["y"].detectors[default_det]
 
-            self.logger.info("Getting RMS beam size...")
             rms_sizes = (x_fit.sigma, y_fit.sigma)
         else:
-            self.logger.warning(
-                "Both x and y profiles not found. Skipping RMS size calculation."
-            )
             rms_sizes = None
         return rms_sizes
 
     def _get_profile_range(self, profile: str) -> tuple:
         """Get the (min, max) range for a given profile."""
         method_name = f"{profile}_range"
-        return getattr(self.my_wire, method_name)
+        return getattr(self.collection_result.metadata.wire_name, method_name)
 
     def _check_range_in_position(
         self, position_data: np.ndarray, profile: str, profile_range: tuple
@@ -166,6 +160,21 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             msg = f"Scan did not reach expected {profile} profile range {profile_range}. Check scan data and collection. Exiting scan."
             self.logger.error(msg)
             raise RuntimeError(msg)
+
+    def _validate_position_data(self, position_data: np.ndarray) -> None:
+        """
+        Validates the position data to ensure it is suitable for analysis.
+        """
+        if position_data.min() == position_data.max():
+            msg = "Min and max position are the same. Check scan data and collection. Exiting scan."
+            self.logger.error(msg)
+            raise RuntimeError(msg)
+
+    def _get_units_for_device(self, device_name: str) -> str:
+        """Get the appropriate units for a given device based on its name."""
+        if device_name == "TMITLOSS":
+            return "%% beam loss"
+        return "counts"
 
     def _get_indices_in_range(
         self, position_data: np.ndarray, min_pos: float, max_pos: float
@@ -214,7 +223,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
     def _extract_wire_angle(self) -> dict:
         """Extract the wire install angle (in radians) for coordinate conversion."""
         # For now, return unit scale. In future, could extract from device metadata.
-        rad = np.deg2rad(self.collection_result.beam_profile_device.install_angle)
+        rad = np.deg2rad(self.collection_result.metadata.install_angle)
         return {"x": np.sin(rad), "y": np.cos(rad), "u": 1.0}
 
     def _convert_stage_to_beam_coords(
@@ -321,7 +330,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             positions=peak_window[0],
         )
 
-    def _fit_profile(self, profile: str, detectors: list) -> FitResult:
+    def _fit_profile(self, profile_measurements, profile: str, detectors: list) -> FitResult:
         """
         Fit all detectors within a single profile.
 
@@ -332,16 +341,13 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Returns:
             FitResult: Fit results for all detectors in the profile.
         """
-        profile_data = self.collection_result.profiles[profile]
+        profile_data = profile_measurements[profile]
         x_stage = profile_data.positions
         x_beam = self._convert_stage_to_beam_coords(profile, x_stage)
 
         detector_fits = {}
         for detector_name in detectors:
             if detector_name not in profile_data.detectors:
-                self.logger.warning(
-                    f"Detector {detector_name} not in profile {profile}. Skipping."
-                )
                 continue
 
             detector_fits[detector_name] = self._fit_detector_in_profile(
