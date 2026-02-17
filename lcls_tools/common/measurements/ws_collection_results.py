@@ -17,32 +17,17 @@ class MeasurementMetadata(BaseModel):
     default_detector: str
     scan_ranges: Dict[str, Tuple[int, int]]
     timestamp: datetime
+    active_profiles: list[str]
     notes: Optional[str] = None
 
 
-class DetectorMeasurement(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    values: NDArrayAnnotatedType
-    units: str | None = None
-    label: str | None = None
-
-
-class ProfileMeasurement(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    positions: NDArrayAnnotatedType
-    detectors: dict[str, DetectorMeasurement]
-    profile_idxs: NDArrayAnnotatedType
-
-
-class WireBPMCollectionResult(BeamProfileCollectionResult):
+class WireMeasurementCollectionResult(BeamProfileCollectionResult):
     """
     Stores the results of a wire beam profile collection.
 
     Attributes:
         model_config: Allows use of non-standard types
                       like NDArrayAnnotatedType.
-        profiles (dict): Dictionary of ProfileMeasurement objects
-                         that contains raw data organized by profile.
         metadata (MeasurementMetadata): Metadata information related to
                                         the measurement.
 
@@ -52,7 +37,6 @@ class WireBPMCollectionResult(BeamProfileCollectionResult):
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    profiles: Dict[str, ProfileMeasurement]
     raw_data: Dict[str, Any]
     metadata: MeasurementMetadata
 
@@ -124,7 +108,9 @@ class WireBPMCollectionResult(BeamProfileCollectionResult):
             profile_group.create_dataset("positions", data=profile.positions)
 
             # Save profile indices
-            profile_group.create_dataset("profile_indices", data=profile.profile_indices)
+            profile_group.create_dataset(
+                "profile_indices", data=profile.profile_indices
+            )
 
             # Save detector measurements
             detectors_group = profile_group.create_group("detectors")
@@ -151,7 +137,7 @@ class WireBPMCollectionResult(BeamProfileCollectionResult):
                     group.attrs[f"{device_name}_unsupported"] = str(data)
 
 
-def load_from_h5(filepath: str) -> WireBPMCollectionResult:
+def load_from_h5(filepath: str) -> WireMeasurementCollectionResult:
     """
     Load wire beam profile measurement results from an HDF5 file.
 

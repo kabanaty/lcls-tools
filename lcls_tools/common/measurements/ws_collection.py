@@ -1,4 +1,3 @@
-from build.lib.lcls_tools.common.logger.logger import custom_logger
 from lcls_tools.common.measurements.beam_profile import BeamProfileMeasurement
 from lcls_tools.common.devices.wire import Wire
 import logging
@@ -10,7 +9,7 @@ from datetime import datetime
 from pydantic import model_validator
 from lcls_tools.common.measurements.tmit_loss import TMITLoss
 from lcls_tools.common.measurements.ws_collection_results import (
-    WireBPMCollectionResult,
+    WireMeasurementCollectionResult,
     ProfileMeasurement,
     DetectorMeasurement,
     MeasurementMetadata,
@@ -19,14 +18,16 @@ import yaml
 import numpy as np
 from typing_extensions import Self
 from lcls_tools.common.measurements.buffer_reservation import reserve_buffer
-from lcls_tools.common.measurements.wire_utils import (
+from lcls_tools.common.measurements.utils import (
     collect_with_size_check,
 )
+from lcls_tools.common.logger.file_logger import custom_logger
 
 
-class WireBPMCollection(BeamProfileMeasurement):
+class WireMeasurementCollection(BeamProfileMeasurement):
     """
-    Performs a wire scan measurement and fits beam profiles.
+    Performs a wire scan measurement and splits raw data
+    into beam profiles.
 
     Attributes:
         name (str): Scan object name required by Measurement class.
@@ -78,7 +79,7 @@ class WireBPMCollection(BeamProfileMeasurement):
         self.devices = self.create_device_dictionary()
         return self
 
-    def measure(self) -> WireBeamProfileMeasurementResult:
+    def measure(self) -> WireMeasurementCollectionResult:
         """
         Perform a wire scan measurement and organize data into beam profiles.
 
@@ -86,10 +87,6 @@ class WireBPMCollection(BeamProfileMeasurement):
         to motion, collects synchronized detector data across all profiles,
         separates the raw data by profile (x, y, u), and returns organized
         measurements without fitting or post-processing.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -122,25 +119,24 @@ class WireBPMCollection(BeamProfileMeasurement):
 
         # Determine the profile range indices
         # e.g., u range = (13000, 18000) -> position_data[100:450]
-        profile_idxs = self.get_profile_range_indices()
+        profile_indices = self.get_profile_range_indices()
 
         # Separate detector data by profile
-        self.profiles = self.organize_data_by_profile(profile_idxs)
+        self.profiles = self.organize_data_by_profile(profile_indices)
 
         # Release EDEF/BSA
         self.logger.info("Releasing BSA buffer.")
         self.my_buffer.release()
         self.my_buffer = None
 
-        return WireBPMCollectionResult(
-            profiles=self.profiles,
+        return WireMeasurementCollectionResult(
             raw_data=self.data,
             metadata=metadata,
         )
 
     def create_device_dictionary(self) -> dict:
         """
-        Creates a device dictionary for a wire scan setup.  Includes the wire 
+        Creates a device dictionary for a wire scan setup.  Includes the wire
         device and any associated detectors from metadata.
 
         Returns:
@@ -242,7 +238,9 @@ class WireBPMCollection(BeamProfileMeasurement):
             profile_range = self._get_profile_range(p)
             self._check_range_in_position(position_data, p, profile_range)
 
-            indices = self._get_indices_in_range(position_data, profile_range[0], profile_range[1])
+            indices = self._get_indices_in_range(
+                position_data, profile_range[0], profile_range[1]
+            )
 
             monotonic_indices = self._get_monotonic_indices(position_data, indices)
 
@@ -273,7 +271,7 @@ class WireBPMCollection(BeamProfileMeasurement):
                 else:
                     detectors[device_name] = self._create_detector_measurement(
                         device_name, data_slice
-                        )
+                    )
 
             profile_measurements[profile] = self._create_profile_measurement(
                 positions, detectors, index
@@ -301,6 +299,7 @@ class WireBPMCollection(BeamProfileMeasurement):
             default_detector=self._get_default_detector(),
             scan_ranges=scan_ranges,
             timestamp=datetime.now(),
+            active_profiles=self._active_profiles(),
             notes=None,
         )
 
@@ -385,7 +384,9 @@ class WireBPMCollection(BeamProfileMeasurement):
         buffer_method = self._get_buffer_collection_method(device_name)
 
         if buffer_method is None:
-            return device.measure()  # For devices like TMITLOSS that don't use buffer collection
+            return (
+                device.measure()
+            )  # For devices like TMITLOSS that don't use buffer collection
 
         return collect_with_size_check(
             device, buffer_method, self.my_buffer, self.logger
@@ -400,47 +401,11 @@ class WireBPMCollection(BeamProfileMeasurement):
             self.logger.error(msg)
             raise RuntimeError(msg)
 
-    def _get_profile_range(self, profile: str) -> tuple:
-        """Get the (min, max) range for a given profile."""
-        method_name = f"{profile}_range"
-        return getattr(self.my_wire, method_name)
-
-    def _check_range_in_position(self, position_data: np.ndarray, profile: str, profile_range: tuple) -> None:
-        """Check if the position data covers the expected range for a profile."""
-        if position_data.max() < profile_range[0]:
-            msg = f"Scan did not reach expected {profile} profile range {profile_range}. Check scan data and collection. Exiting scan."
-            self.logger.error(msg)
-            raise RuntimeError(msg)
-
-    def _get_indices_in_range(self, position_data: np.ndarray, min_pos: float, max_pos: float) -> np.ndarray:
-        """Return indices of position data within a given range."""
-        return np.where((position_data >= min_pos) & (position_data <= max_pos))[0]
-
-    def _get_monotonic_indices(self, position_data: np.ndarray, indices: np.ndarray) -> np.ndarray:
-        """Return indices of position data that are monotonically non-decreasing."""
-        pos = position_data[indices]
-        mono_mask = self._mono_array(pos)
-        return indices[mono_mask]
-
     def _get_units_for_device(self, device_name: str) -> str:
         """Get the appropriate units for a given device based on its name."""
         if device_name == "TMITLOSS":
             return "%% beam loss"
         return "counts"
-
-    def _create_detector_measurement(self, device_name: str, data_slice: np.ndarray) -> DetectorMeasurement:
-        """Create a DetectorMeasurement object for a given device and data slice."""
-        units = self._get_units_for_device(device_name)
-        return DetectorMeasurement(values=data_slice, units=units, label=device_name)
-
-    def _create_profile_measurement(
-            self, positions: np.ndarray, detectors: dict, profile_indices: np.ndarray
-            ) -> ProfileMeasurement:
-        return ProfileMeasurement(
-            positions=positions,
-            detectors=detectors,
-            profile_indices=profile_indices
-        )
 
     def _active_profiles(self) -> list:
         """
@@ -497,22 +462,6 @@ class WireBPMCollection(BeamProfileMeasurement):
 
         buffer_points = pulses * 3 * fudge + rate / 6
         return int(buffer_points)
-
-    def _mono_array(self, pos: np.ndarray) -> np.ndarray:
-        """
-        Boolean mask of monotonically non-decreasing data points
-        Mask of values where difference between neighbors is > 0.
-        """
-        mono = True
-        mono_mask = np.array(
-            # Data point [i-1] is less than subsequent data point [i]
-            # and that relationship was True for the previous pair
-            # for all points
-            [mono := (pos[i - 1] <= pos[i] and mono) for i in range(1, len(pos))],
-            dtype=bool,
-        )
-        mono_mask = np.concatenate(([True], mono_mask))
-        return mono_mask
 
     def _load_yaml_config(self) -> Optional[dict]:
         file_to_open = (

@@ -1,6 +1,7 @@
 from typing import Annotated
 import numpy as np
 from pydantic import BeforeValidator
+import time
 
 
 def collect_with_size_check(

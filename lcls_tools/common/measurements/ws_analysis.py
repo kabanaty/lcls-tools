@@ -1,17 +1,17 @@
-import logging
 from typing import Any, Dict
 from pydantic import ConfigDict
 import lcls_tools.common.model.gaussian as gaussian
 from lcls_tools.common.measurements.beam_profile import BeamProfileAnalysis
 from lcls_tools.common.measurements.ws_analysis_results import (
+    DetectorProfileMeasurement,
+    ProfileMeasurement,
     FitResult,
     DetectorFit,
 )
-from lcls_tools.common.measurements.ws_collection_results import WireBPMCollectionResult
 import numpy as np
 
 
-class WireBPMAnalysis(BeamProfileAnalysis):
+class WireMeasurementAnalysis(BeamProfileAnalysis):
     """
     Analyzes wire scan measurement data and performs Gaussian fitting.
 
@@ -20,11 +20,196 @@ class WireBPMAnalysis(BeamProfileAnalysis):
     and profile.
 
     Attributes:
-        collection_result (WireBPMCollectionResult): Raw measurement data from wire scan.
+        collection_result (WireMeasurementCollectionResult): Raw measurement data from wire scan.
         logger (logging.Logger): Logger for diagnostic messages.
     """
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    fit_result: Dict[str, FitResult]
+
+    def analyze(self) -> Dict[str, Any]:
+        """
+        Perform complete analysis: fit profiles and extract RMS sizes.
+
+        Returns:
+            dict: Analysis results containing:
+                - fit_result: Gaussian fit parameters per profile and detector
+                - rms_sizes: Computed RMS beam sizes (if both x and y profiles present)
+        """
+        profile_indices = self.get_profile_range_indices()
+        profile_measurements = self.organize_data_by_profile(profile_indices)
+
+        fit_result = self.fit_data_by_profile(profile_measurements=profile_measurements)
+        rms_sizes = self.get_rms_sizes(fit_result)
+
+        return {
+            "fit_result": fit_result,
+            "rms_sizes": rms_sizes,
+        }
+
+    def get_profile_range_indices(self) -> dict:
+        """
+        Finds sequential scan indices within each profile's position range.
+
+        Returns:
+            dict: Profile keys ('x', 'y', 'u') with lists of index arrays.
+        """
+        self.logger.info("Getting profile range indices...")
+        position_data = self.collection_result.raw_data[self.collection_result.metadata.wire_name]
+
+        # Single validation pass
+        self._validate_position_data(position_data)
+
+        profile_indices = {}
+        for p in self.collection_result.metadata.active_profiles:
+            profile_range = self._get_profile_range(p)
+            self._check_range_in_position(position_data, p, profile_range)
+
+            indices = self._get_indices_in_range(
+                position_data, profile_range[0], profile_range[1]
+            )
+
+            monotonic_indices = self._get_monotonic_indices(position_data, indices)
+
+            profile_indices[p] = monotonic_indices
+
+        self.logger.info("Profile range indices collected.")
+        return profile_indices
+
+    def organize_data_by_profile(self, profile_indices) -> dict:
+        """
+        Organizes detector data by scan profile for each device.
+
+        Returns:
+            dict: Nested dict with profiles as keys and device
+                  data per profile.
+        """
+        self.logger.info("Creating profile data objects...")
+        profile_measurements = {}
+
+        for profile, index in profile_indices.items():
+            detectors = {}
+            positions = None
+            for device_name in self.collection_result.metadata.detectors:
+                data_slice = self.collection_result.raw_data[device_name][index]
+
+                if device_name == self.collection_result.metadata.wire_name:
+                    positions = data_slice
+                else:
+                    detectors[device_name] = self._create_detector_measurement(
+                        device_name, data_slice
+                    )
+
+            profile_measurements[profile] = self._create_profile_measurement(
+                positions, detectors, index
+            )
+
+        self.logger.info("Profile data objects created.")
+        return profile_measurements
+
+    def fit_data_by_profile(self, profile_measurements) -> dict:
+        """
+        Fit detector data for each profile and device using Gaussian curves.
+        Applies beam fitting to x, y, and u projections for all detectors
+        in the measurement result.
+
+        Returns:
+            dict: Fit results organized by profile and detector.
+        """
+        self.logger.info("Fitting profile data...")
+
+        profiles = list(profile_measurements.keys())
+        detectors = list(self.collection_result.metadata.detectors)
+
+        fit_result = {
+            profile: self._fit_profile(profile, detectors) for profile in profiles
+        }
+
+        self.logger.info("Profile data fit.")
+        return fit_result
+
+    def get_rms_sizes(self, fit_result: dict) -> tuple | None:
+        """
+        Extract RMS beam sizes from fit results.
+
+        Computes RMS sizes from x and y profile fits using the default detector.
+
+        Parameters:
+            fit_result (dict): Fit results from fit_data_by_profile().
+
+        Returns:
+            tuple or None: (x_rms, y_rms) in meters, or None if both profiles not present.
+        """
+        if "x" in fit_result and "y" in fit_result:
+            default_det = self.collection_result.metadata.default_detector
+            x_fit = fit_result["x"].detectors[default_det]
+            y_fit = fit_result["y"].detectors[default_det]
+
+            self.logger.info("Getting RMS beam size...")
+            rms_sizes = (x_fit.sigma, y_fit.sigma)
+        else:
+            self.logger.warning(
+                "Both x and y profiles not found. Skipping RMS size calculation."
+            )
+            rms_sizes = None
+        return rms_sizes
+
+    def _get_profile_range(self, profile: str) -> tuple:
+        """Get the (min, max) range for a given profile."""
+        method_name = f"{profile}_range"
+        return getattr(self.my_wire, method_name)
+
+    def _check_range_in_position(
+        self, position_data: np.ndarray, profile: str, profile_range: tuple
+    ) -> None:
+        """Check if the position data covers the expected range for a profile."""
+        if position_data.max() < profile_range[0]:
+            msg = f"Scan did not reach expected {profile} profile range {profile_range}. Check scan data and collection. Exiting scan."
+            self.logger.error(msg)
+            raise RuntimeError(msg)
+
+    def _get_indices_in_range(
+        self, position_data: np.ndarray, min_pos: float, max_pos: float
+    ) -> np.ndarray:
+        """Return indices of position data within a given range."""
+        return np.where((position_data >= min_pos) & (position_data <= max_pos))[0]
+
+    def _get_monotonic_indices(
+        self, position_data: np.ndarray, indices: np.ndarray
+    ) -> np.ndarray:
+        """Return indices of position data that are monotonically non-decreasing."""
+        pos = position_data[indices]
+        mono_mask = self._mono_array(pos)
+        return indices[mono_mask]
+
+    def _mono_array(self, pos: np.ndarray) -> np.ndarray:
+        """
+        Boolean mask of monotonically non-decreasing data points
+        Mask of values where difference between neighbors is > 0.
+        """
+        mono = True
+        mono_mask = np.array(
+            # Data point [i-1] is less than subsequent data point [i]
+            # and that relationship was True for the previous pair
+            # for all points
+            [mono := (pos[i - 1] <= pos[i] and mono) for i in range(1, len(pos))],
+            dtype=bool,
+        )
+        mono_mask = np.concatenate(([True], mono_mask))
+        return mono_mask
+
+    def _create_detector_measurement(
+        self, device_name: str, data_slice: np.ndarray
+    ) -> DetectorProfileMeasurement:
+        """Create a DetectorProfileMeasurement object for a given device and data slice."""
+        units = self._get_units_for_device(device_name)
+        return DetectorProfileMeasurement(values=data_slice, units=units, label=device_name)
+
+    def _create_profile_measurement(
+        self, positions: np.ndarray, detectors: dict, profile_indices: np.ndarray
+    ) -> ProfileMeasurement:
+        return ProfileMeasurement(
+            positions=positions, detectors=detectors, profile_indices=profile_indices
+        )
 
     def _extract_wire_angle(self) -> dict:
         """Extract the wire install angle (in radians) for coordinate conversion."""
@@ -32,12 +217,16 @@ class WireBPMAnalysis(BeamProfileAnalysis):
         rad = np.deg2rad(self.collection_result.beam_profile_device.install_angle)
         return {"x": np.sin(rad), "y": np.cos(rad), "u": 1.0}
 
-    def _convert_stage_to_beam_coords(self, profile: str, positions: np.ndarray) -> np.ndarray:
+    def _convert_stage_to_beam_coords(
+        self, profile: str, positions: np.ndarray
+    ) -> np.ndarray:
         """Convert stage positions to beam coordinates for a given profile."""
         scale = self._extract_wire_angle()
         return positions * abs(scale[profile])
 
-    def _peak_window(self, x: np.ndarray, y: np.ndarray, n_stds: float = 6, filter_size: int = 5) -> tuple:
+    def _peak_window(
+        self, x: np.ndarray, y: np.ndarray, n_stds: float = 6, filter_size: int = 5
+    ) -> tuple:
         """
         Extract peak window from 1D detector data using statistical windowing.
 
@@ -96,7 +285,9 @@ class WireBPMAnalysis(BeamProfileAnalysis):
 
         return x[left : right + 1], y[left : right + 1], (left, right)
 
-    def _fit_detector_in_profile(self, x_beam: np.ndarray, detector_signal: np.ndarray) -> DetectorFit:
+    def _fit_detector_in_profile(
+        self, x_beam: np.ndarray, detector_signal: np.ndarray
+    ) -> DetectorFit:
         """
         Fit a single detector signal within a profile using Gaussian curve.
 
@@ -148,7 +339,9 @@ class WireBPMAnalysis(BeamProfileAnalysis):
         detector_fits = {}
         for detector_name in detectors:
             if detector_name not in profile_data.detectors:
-                self.logger.warning(f"Detector {detector_name} not in profile {profile}. Skipping.")
+                self.logger.warning(
+                    f"Detector {detector_name} not in profile {profile}. Skipping."
+                )
                 continue
 
             detector_fits[detector_name] = self._fit_detector_in_profile(
@@ -156,68 +349,3 @@ class WireBPMAnalysis(BeamProfileAnalysis):
             )
 
         return FitResult(detectors=detector_fits)
-
-    def fit_data_by_profile(self) -> dict:
-        """
-        Fit detector data for each profile and device using Gaussian curves.
-        Applies beam fitting to x, y, and u projections for all detectors
-        in the measurement result.
-
-        Returns:
-            dict: Fit results organized by profile and detector.
-        """
-        self.logger.info("Fitting profile data...")
-
-        profiles = self.collection_result.profiles
-        detectors = list(self.collection_result.metadata.detectors)
-
-        fit_result = {
-            profile: self._fit_profile(profile, detectors)
-            for profile in profiles
-        }
-
-        self.logger.info("Profile data fit.")
-        return fit_result
-
-    def get_rms_sizes(self, fit_result: dict) -> tuple | None:
-        """
-        Extract RMS beam sizes from fit results.
-
-        Computes RMS sizes from x and y profile fits using the default detector.
-
-        Parameters:
-            fit_result (dict): Fit results from fit_data_by_profile().
-
-        Returns:
-            tuple or None: (x_rms, y_rms) in meters, or None if both profiles not present.
-        """
-        if "x" in fit_result and "y" in fit_result:
-            default_det = self.collection_result.metadata.default_detector
-            x_fit = fit_result["x"].detectors[default_det]
-            y_fit = fit_result["y"].detectors[default_det]
-
-            self.logger.info("Getting RMS beam size...")
-            rms_sizes = (x_fit.sigma, y_fit.sigma)
-        else:
-            self.logger.warning(
-                "Both x and y profiles not found. Skipping RMS size calculation."
-            )
-            rms_sizes = None
-        return rms_sizes
-
-    def analyze(self) -> Dict[str, Any]:
-        """
-        Perform complete analysis: fit profiles and extract RMS sizes.
-
-        Returns:
-            dict: Analysis results containing:
-                - fit_result: Gaussian fit parameters per profile and detector
-                - rms_sizes: Computed RMS beam sizes (if both x and y profiles present)
-        """
-        fit_result = self.fit_data_by_profile()
-        rms_sizes = self.get_rms_sizes(fit_result)
-
-        return {
-            "fit_result": fit_result,
-            "rms_sizes": rms_sizes,
-        }
