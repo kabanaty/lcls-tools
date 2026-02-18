@@ -40,9 +40,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         profile_indices = self.get_profile_range_indices()
         profile_measurements = self.organize_data_by_profile(profile_indices)
 
-        fit_result = self.fit_data_by_profile(
-            profile_measurements=profile_measurements
-            )
+        fit_result = self.fit_data_by_profile(profile_measurements=profile_measurements)
         rms_sizes = self.get_rms_sizes(fit_result)
 
         return WireMeasurementAnalysisResult(
@@ -76,9 +74,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
                 position_data, profile_range[0], profile_range[1]
             )
 
-            monotonic_indices = self._get_monotonic_indices(
-                position_data, indices
-                )
+            monotonic_indices = self._get_monotonic_indices(position_data, indices)
 
             profile_indices[p] = monotonic_indices
 
@@ -104,9 +100,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
                 if d_n == self.collection_result.metadata.wire_name:
                     positions = data_slice
                 else:
-                    detectors[d_n] = self._create_detector_measurement(
-                        d_n, data_slice
-                    )
+                    detectors[d_n] = self._create_detector_measurement(d_n, data_slice)
 
             profile_measurements[profile] = self._create_profile_measurement(
                 positions, detectors, index
@@ -127,11 +121,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         detectors = list(self.collection_result.metadata.detectors)
 
         fit_result = {
-            profile: self._fit_profile(
-                profile_measurements,
-                profile,
-                detectors
-                )
+            profile: self._fit_profile(profile_measurements, profile, detectors)
             for profile in profiles
         }
 
@@ -173,9 +163,11 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Check if the position data covers the expected range for a profile.
         """
         if position_data.max() < profile_range[0]:
-            msg = f"Scan did not reach expected {profile} profile range " \
-                  f"{profile_range}. Check scan data and collection. " \
-                  f"Exiting scan."
+            msg = (
+                f"Scan did not reach expected {profile} profile range "
+                f"{profile_range}. Check scan data and collection. "
+                f"Exiting scan."
+            )
             raise RuntimeError(msg)
 
     def _validate_position_data(self, position_data: np.ndarray) -> None:
@@ -183,8 +175,10 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Validates the position data to ensure it is suitable for analysis.
         """
         if position_data.min() == position_data.max():
-            msg = "Min and max position are the same. Check scan data " \
-                  "and collection. Exiting scan."
+            msg = (
+                "Min and max position are the same. Check scan data "
+                "and collection. Exiting scan."
+            )
             raise RuntimeError(msg)
 
     def _get_units_for_device(self, device_name: str) -> str:
@@ -197,9 +191,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         self, position_data: np.ndarray, min_pos: float, max_pos: float
     ) -> np.ndarray:
         """Return indices of position data within a given range."""
-        return np.where(
-            (position_data >= min_pos) & (position_data <= max_pos)
-            )[0]
+        return np.where((position_data >= min_pos) & (position_data <= max_pos))[0]
 
     def _get_monotonic_indices(
         self, position_data: np.ndarray, indices: np.ndarray
@@ -221,8 +213,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             # Data point [i-1] is less than subsequent data point [i]
             # and that relationship was True for the previous pair
             # for all points
-            [mono := (pos[i - 1] <= pos[i] and mono)
-             for i in range(1, len(pos))],
+            [mono := (pos[i - 1] <= pos[i] and mono) for i in range(1, len(pos))],
             dtype=bool,
         )
         mono_mask = np.concatenate(([True], mono_mask))
@@ -241,15 +232,10 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         )
 
     def _create_profile_measurement(
-        self,
-        positions: np.ndarray,
-        detectors: dict,
-        profile_indices: np.ndarray
+        self, positions: np.ndarray, detectors: dict, profile_indices: np.ndarray
     ) -> ProfileMeasurement:
         return ProfileMeasurement(
-            positions=positions,
-            detectors=detectors,
-            profile_indices=profile_indices
+            positions=positions, detectors=detectors, profile_indices=profile_indices
         )
 
     def _extract_wire_angle(self) -> dict:
@@ -267,11 +253,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         return positions * abs(scale[profile])
 
     def _peak_window(
-        self,
-        x: np.ndarray,
-        y: np.ndarray,
-        n_stds: float = 6,
-        filter_size: int = 5
+        self, x: np.ndarray, y: np.ndarray, n_stds: float = 6, filter_size: int = 5
     ) -> tuple:
         """
         Extract peak window from 1D detector data using statistical windowing.
@@ -305,8 +287,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         # Find centroid and RMS of thresholded signal
         if y_thresholded.sum() == 0:
             # Fallback to simple peak finding if no signal above threshold
-            msg = "No signal above threshold. " \
-                  "Using simple peak finding for window."
+            msg = "No signal above threshold. Using simple peak finding for window."
             warnings.warn(msg, UserWarning, stacklevel=2)
             i = np.argmax(y)
             center = x[i]
@@ -330,7 +311,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         left = max(0, left)
         right = min(len(y) - 1, right)
 
-        return x[left:right + 1], y[left:right + 1], (left, right)
+        return x[left : right + 1], y[left : right + 1], (left, right)
 
     def _fit_detector_in_profile(
         self, x_beam: np.ndarray, detector_signal: np.ndarray

@@ -136,8 +136,10 @@ class TestWireMeasurementCollectionMethods(unittest.TestCase):
         collection.create_metadata = WireMeasurementCollection.create_metadata.__get__(
             collection, WireMeasurementCollection
         )
-        collection._active_profiles = WireMeasurementCollection._active_profiles.__get__(
-            collection, WireMeasurementCollection
+        collection._active_profiles = (
+            WireMeasurementCollection._active_profiles.__get__(
+                collection, WireMeasurementCollection
+            )
         )
         collection._get_profile_range = (
             WireMeasurementAnalysis._get_profile_range.__get__(
@@ -185,8 +187,10 @@ class TestWireMeasurementCollectionMethods(unittest.TestCase):
         collection._wait_until = WireMeasurementCollection._wait_until.__get__(
             collection, WireMeasurementCollection
         )
-        collection._calc_buffer_points = WireMeasurementCollection._calc_buffer_points.__get__(
-            collection, WireMeasurementCollection
+        collection._calc_buffer_points = (
+            WireMeasurementCollection._calc_buffer_points.__get__(
+                collection, WireMeasurementCollection
+            )
         )
         collection._get_monotonic_indices = (
             WireMeasurementAnalysis._get_monotonic_indices.__get__(
@@ -532,8 +536,10 @@ class TestWireMeasurementCollectionIntegration(unittest.TestCase):
                 collection, WireMeasurementCollection
             )
         )
-        collection._active_profiles = WireMeasurementCollection._active_profiles.__get__(
-            collection, WireMeasurementCollection
+        collection._active_profiles = (
+            WireMeasurementCollection._active_profiles.__get__(
+                collection, WireMeasurementCollection
+            )
         )
         collection._get_profile_range = (
             WireMeasurementAnalysis._get_profile_range.__get__(
