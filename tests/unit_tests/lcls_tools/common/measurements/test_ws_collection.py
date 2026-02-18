@@ -1,21 +1,24 @@
-from lcls_tools.common.measurements.ws_collection import WireBPMCollection
-from lcls_tools.common.measurements.ws_collection_results import (
-    ProfileMeasurement,
-    DetectorMeasurement,
-    MeasurementMetadata,
-)
+import sys
 import unittest
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 import numpy as np
 import logging
-import sys
 
 # Patch missing modules before importing ws_collection
 sys.modules["meme"] = MagicMock()
 sys.modules["meme.names"] = MagicMock()
 sys.modules["edef"] = MagicMock()
-sys.modules["edef.devices"] = MagicMock()
+
+from lcls_tools.common.measurements.ws_collection import WireMeasurementCollection
+from lcls_tools.common.measurements.ws_collection_results import (
+    MeasurementMetadata,
+)
+from lcls_tools.common.measurements.ws_analysis import WireMeasurementAnalysis
+from lcls_tools.common.measurements.ws_analysis_results import (
+    ProfileMeasurement,
+    DetectorProfileMeasurement as DetectorMeasurement,
+)
 
 
 class MockWire:
@@ -27,6 +30,7 @@ class MockWire:
         self.x_range = (100, 200)
         self.y_range = (150, 250)
         self.u_range = (200, 300)
+        self.install_angle = 0.0
         self.use_x_wire = True
         self.use_y_wire = True
         self.use_u_wire = True
@@ -66,8 +70,8 @@ class MockBuffer:
         pass
 
 
-class TestWireBPMCollectionMethods(unittest.TestCase):
-    """Tests for WireBPMCollection individual methods using mocked instances."""
+class TestWireMeasurementCollectionMethods(unittest.TestCase):
+    """Tests for WireMeasurementCollection individual methods using mocked instances."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -114,13 +118,13 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
 
     def _create_instance(self):
         """Create a mock collection instance."""
-        collection = MagicMock(spec=WireBPMCollection)
+        collection = MagicMock(spec=WireMeasurementCollection)
         mock_wire = MockWire()
         mock_wire.metadata.detectors = ["LBLM:TEST_AREA", "PMT:TEST_AREA"]
 
         collection.beam_profile_device = mock_wire
         collection.my_wire = mock_wire
-        collection.beampath = "GUNB"
+        collection.beampath = "CU_HXR"
         collection.my_buffer = MockBuffer(number=1)
         collection.devices = {mock_wire.name: mock_wire}
         collection.detectors = [d.split(":")[0] for d in mock_wire.metadata.detectors]
@@ -129,71 +133,73 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         collection.logger = logging.getLogger("test")
 
         # Bind the real methods to the mock
-        collection.create_metadata = WireBPMCollection.create_metadata.__get__(
-            collection, WireBPMCollection
+        collection.create_metadata = WireMeasurementCollection.create_metadata.__get__(
+            collection, WireMeasurementCollection
         )
-        collection._active_profiles = WireBPMCollection._active_profiles.__get__(
-            collection, WireBPMCollection
+        collection._active_profiles = WireMeasurementCollection._active_profiles.__get__(
+            collection, WireMeasurementCollection
         )
-        collection._get_profile_range = WireBPMCollection._get_profile_range.__get__(
-            collection, WireBPMCollection
+        collection._get_profile_range = (
+            WireMeasurementAnalysis._get_profile_range.__get__(
+                collection, WireMeasurementAnalysis
+            )
         )
-        collection._mono_array = WireBPMCollection._mono_array.__get__(
-            collection, WireBPMCollection
+        collection._mono_array = WireMeasurementAnalysis._mono_array.__get__(
+            collection, WireMeasurementAnalysis
         )
         collection._get_indices_in_range = (
-            WireBPMCollection._get_indices_in_range.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._get_indices_in_range.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._validate_position_data = (
-            WireBPMCollection._validate_position_data.__get__(
-                collection, WireBPMCollection
+            WireMeasurementCollection._validate_position_data.__get__(
+                collection, WireMeasurementCollection
             )
         )
         collection._check_range_in_position = (
-            WireBPMCollection._check_range_in_position.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._check_range_in_position.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._get_units_for_device = (
-            WireBPMCollection._get_units_for_device.__get__(
-                collection, WireBPMCollection
+            WireMeasurementCollection._get_units_for_device.__get__(
+                collection, WireMeasurementCollection
             )
         )
         collection._create_detector_measurement = (
-            WireBPMCollection._create_detector_measurement.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._create_detector_measurement.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._create_profile_measurement = (
-            WireBPMCollection._create_profile_measurement.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._create_profile_measurement.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._get_buffer_collection_method = (
-            WireBPMCollection._get_buffer_collection_method.__get__(
-                collection, WireBPMCollection
+            WireMeasurementCollection._get_buffer_collection_method.__get__(
+                collection, WireMeasurementCollection
             )
         )
-        collection._wait_until = WireBPMCollection._wait_until.__get__(
-            collection, WireBPMCollection
+        collection._wait_until = WireMeasurementCollection._wait_until.__get__(
+            collection, WireMeasurementCollection
         )
-        collection._calc_buffer_points = WireBPMCollection._calc_buffer_points.__get__(
-            collection, WireBPMCollection
+        collection._calc_buffer_points = WireMeasurementCollection._calc_buffer_points.__get__(
+            collection, WireMeasurementCollection
         )
         collection._get_monotonic_indices = (
-            WireBPMCollection._get_monotonic_indices.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._get_monotonic_indices.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._get_default_detector = (
-            WireBPMCollection._get_default_detector.__get__(
-                collection, WireBPMCollection
+            WireMeasurementCollection._get_default_detector.__get__(
+                collection, WireMeasurementCollection
             )
         )
-        collection._reserve_buffer = WireBPMCollection._reserve_buffer.__get__(
-            collection, WireBPMCollection
+        collection._reserve_buffer = WireMeasurementCollection._reserve_buffer.__get__(
+            collection, WireMeasurementCollection
         )
         collection._load_yaml_config = MagicMock(
             return_value=None
@@ -208,7 +214,7 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         self.assertIsInstance(metadata, MeasurementMetadata)
         self.assertEqual(metadata.wire_name, self.collection.my_wire.name)
         self.assertEqual(metadata.area, self.collection.my_wire.area)
-        self.assertEqual(metadata.beampath, "GUNB")
+        self.assertEqual(metadata.beampath, "CU_HXR")
         self.assertIsInstance(metadata.timestamp, datetime)
 
     def test_active_profiles_all_enabled(self):
@@ -460,8 +466,8 @@ class TestWireBPMCollectionMethods(unittest.TestCase):
         self.mock_reserve_buffer.assert_called()
 
 
-class TestWireBPMCollectionIntegration(unittest.TestCase):
-    """Integration tests for WireBPMCollection workflow methods."""
+class TestWireMeasurementCollectionIntegration(unittest.TestCase):
+    """Integration tests for WireMeasurementCollection workflow methods."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -506,11 +512,11 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
 
     def _create_instance(self):
         """Create a mock collection instance."""
-        collection = MagicMock(spec=WireBPMCollection)
+        collection = MagicMock(spec=WireMeasurementCollection)
 
         collection.beam_profile_device = self.mock_wire
         collection.my_wire = self.mock_wire
-        collection.beampath = "GUNB"
+        collection.beampath = "CU_HXR"
         collection.my_buffer = MockBuffer(number=1)
         collection.devices = {self.mock_wire.name: self.mock_wire}
         collection.detectors = [
@@ -522,38 +528,40 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
 
         # Bind real methods
         collection.get_profile_range_indices = (
-            WireBPMCollection.get_profile_range_indices.__get__(
-                collection, WireBPMCollection
+            WireMeasurementCollection.get_profile_range_indices.__get__(
+                collection, WireMeasurementCollection
             )
         )
-        collection._active_profiles = WireBPMCollection._active_profiles.__get__(
-            collection, WireBPMCollection
+        collection._active_profiles = WireMeasurementCollection._active_profiles.__get__(
+            collection, WireMeasurementCollection
         )
-        collection._get_profile_range = WireBPMCollection._get_profile_range.__get__(
-            collection, WireBPMCollection
+        collection._get_profile_range = (
+            WireMeasurementAnalysis._get_profile_range.__get__(
+                collection, WireMeasurementAnalysis
+            )
         )
         collection._validate_position_data = (
-            WireBPMCollection._validate_position_data.__get__(
-                collection, WireBPMCollection
+            WireMeasurementCollection._validate_position_data.__get__(
+                collection, WireMeasurementCollection
             )
         )
         collection._check_range_in_position = (
-            WireBPMCollection._check_range_in_position.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._check_range_in_position.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._get_indices_in_range = (
-            WireBPMCollection._get_indices_in_range.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._get_indices_in_range.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
         collection._get_monotonic_indices = (
-            WireBPMCollection._get_monotonic_indices.__get__(
-                collection, WireBPMCollection
+            WireMeasurementAnalysis._get_monotonic_indices.__get__(
+                collection, WireMeasurementAnalysis
             )
         )
-        collection._mono_array = WireBPMCollection._mono_array.__get__(
-            collection, WireBPMCollection
+        collection._mono_array = WireMeasurementAnalysis._mono_array.__get__(
+            collection, WireMeasurementAnalysis
         )
 
         return collection
@@ -579,23 +587,23 @@ class TestWireBPMCollectionIntegration(unittest.TestCase):
         """Test organize_data_by_profile with realistic workflow."""
         # Bind organize method
         self.collection.organize_data_by_profile = (
-            WireBPMCollection.organize_data_by_profile.__get__(
-                self.collection, WireBPMCollection
+            WireMeasurementCollection.organize_data_by_profile.__get__(
+                self.collection, WireMeasurementCollection
             )
         )
         self.collection._create_detector_measurement = (
-            WireBPMCollection._create_detector_measurement.__get__(
-                self.collection, WireBPMCollection
+            WireMeasurementAnalysis._create_detector_measurement.__get__(
+                self.collection, WireMeasurementAnalysis
             )
         )
         self.collection._create_profile_measurement = (
-            WireBPMCollection._create_profile_measurement.__get__(
-                self.collection, WireBPMCollection
+            WireMeasurementAnalysis._create_profile_measurement.__get__(
+                self.collection, WireMeasurementAnalysis
             )
         )
         self.collection._get_units_for_device = (
-            WireBPMCollection._get_units_for_device.__get__(
-                self.collection, WireBPMCollection
+            WireMeasurementCollection._get_units_for_device.__get__(
+                self.collection, WireMeasurementCollection
             )
         )
 
