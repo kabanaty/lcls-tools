@@ -73,11 +73,25 @@ class WireMeasurementCollection(BeamProfileMeasurement):
         self.devices = self.create_device_dictionary()
         return self
 
-    def measure(self) -> WireMeasurementCollectionResult:
+    def measure(self, scan_type: str = "on_the_fly") -> WireMeasurementCollectionResult:
         """
         Execute wire scan: move wire, acquire detector data from BSA buffer.
 
-        Returns raw measurement data without organization or fitting.
+        Two scan modes are supported:
+        - ``on_the_fly`` : use the wire's built-in start_scan command and
+          collect data while the wire moves continuously.
+        - ``step`` : perform a discrete (step) scan by moving the motor to each
+          inner/outer position in sequence with the buffer acquiring the whole
+          time.
+
+        The desired mode can be selected by passing ``scan_type``.  The
+        default is ``on_the_fly`` to preserve backwards compatibility.
+
+        Parameters
+        ----------
+        scan_type : str, optional
+            ``"on_the_fly"`` or ``"step"``.  Any other value will raise a
+            ``ValueError``.
 
         Returns
         -------
@@ -86,6 +100,12 @@ class WireMeasurementCollection(BeamProfileMeasurement):
             - raw_data: Buffered position and detector values by device name
             - metadata: Timestamp, wire name, area, beampath, and detector list
         """
+        # validate input
+        if scan_type not in ("on_the_fly", "step"):
+            raise ValueError(
+                f"Unknown scan_type '{scan_type}'. ``on_the_fly`` or ``step`` expected."
+            )
+
         # Reserve a new buffer if necessary
         if self.my_buffer is None:
             self.my_buffer = self._reserve_buffer()
@@ -93,11 +113,13 @@ class WireMeasurementCollection(BeamProfileMeasurement):
         # Create measurement metadata object
         metadata = self.create_metadata()
 
-        # Send command to start wire motion sequence and wait for initialization
-        self.scan_with_wire()
+        # Send command to start wire motion sequence
+        self.scan_with_wire(scan_type=scan_type)
 
-        # Start BSA buffer and wait for acquisition to complete
-        self.start_timing_buffer()
+        # For on‑the‑fly scans we must start the timing buffer here; the step
+        # implementation already handles the buffer start and wait internally.
+        if scan_type == "on_the_fly":
+            self.start_timing_buffer()
 
         # Get position and detector data from the buffer
         self.data = self.get_data_from_buffer()
@@ -106,6 +128,10 @@ class WireMeasurementCollection(BeamProfileMeasurement):
         self.logger.info("Releasing BSA buffer.")
         self.my_buffer.release()
         self.my_buffer = None
+
+        # Turn off motor after scan only if retract was successful
+        if self.my_wire.motor_rbv < 500:
+            self.my_wire.torque_enable = 0
 
         return WireMeasurementCollectionResult(
             raw_data=self.data,
@@ -146,17 +172,34 @@ class WireMeasurementCollection(BeamProfileMeasurement):
         self.logger.info("Device dictionary built.")
         return devices
 
-    def scan_with_wire(self) -> None:
+    def scan_with_wire(self, scan_type: str = "on_the_fly") -> None:
         """
-        Starts the buffer and wire scan with brief delays.
+        Kick off motion for the wire and (optionally) the buffer.
 
-        Delays ensure the buffer is active before the scan begins
-        and allows time for the buffer to update its state.
+        The behaviour depends on the requested ``scan_type``.  The default is
+        ``on_the_fly`` which simply enables the wire and allows the motor IOC to
+        handle the continuous motion; a timing buffer is started later in the
+        :meth:`measure` method.  In ``step`` mode the wire is driven to each of
+        the inner/outer positions one at a time while the buffer is already
+        running.  The latter is useful for setups where the wire cannot use the
+        built-in continuous scan command.
+
+        Parameters
+        ----------
+        scan_type : str, optional
+            ``"on_the_fly"`` or ``"step"``.  ``on_the_fly`` behaviour is the
+            historic default.
         """
         # Reserve a new buffer if necessary
         if self.my_buffer is None:
             self.my_buffer = self._reserve_buffer()
-        self._start_scan_with_retry()
+
+        if scan_type == "on_the_fly":
+            self._start_scan_with_retry()
+        elif scan_type == "step":
+            self._perform_step_scan()
+        else:
+            raise ValueError(f"Unsupported scan_type '{scan_type}'")
 
     def start_timing_buffer(self) -> None:
         """
@@ -318,15 +361,77 @@ class WireMeasurementCollection(BeamProfileMeasurement):
 
         return device
 
-    def _start_scan_with_retry(self, max_attempts: int = 3, timeout: int = 10):
+    def _perform_step_scan(self) -> None:
+        """Run a step scan: init wire, start buffer, move positions, retract, wait."""
+        self.logger.info("Performing step scan mode")
+
+        # Initialize wire for step scan (with retry logic, no continuous motion)
+        self._initialize_wire_for_step_scan()
+
+        # Start buffer acquisition after successful wire initialization
+        self.logger.info("Starting buffer acquisition for step scan...")
+        self.my_buffer.start()
+
+        # Get ordered positions and move to each
+        positions = self._get_step_positions()
+        for i, position in enumerate(positions):
+            self._move_to_step_position(position, i, len(positions))
+
+        # Retract wire
+        self.logger.info("Retracting wire...")
+        self.my_wire.speed = self.my_wire.speed_max
+        self.my_wire.motor = 100
+
+        # Wait for buffer acquisition to complete
+        self.logger.info("Waiting for buffer acquisition to complete...")
+        while not self.my_buffer.is_acquisition_complete():
+            time.sleep(0.1)
+
+    def _initialize_wire_for_step_scan(
+        self, max_attempts: int = 3, timeout: int = 10
+    ) -> None:
+        """Wrapper that retries initialization for step scans."""
+        self._initialize_wire_with_retry(
+            wire_action="initialize", max_attempts=max_attempts, timeout=timeout
+        )
+
+    def _start_scan_with_retry(self, max_attempts: int = 3, timeout: int = 10) -> None:
+        """Wrapper that retries start_scan for on-the-fly scans."""
+        self._initialize_wire_with_retry(
+            wire_action="start_scan", max_attempts=max_attempts, timeout=timeout
+        )
+
+    def _initialize_wire_with_retry(
+        self,
+        wire_action: str,
+        max_attempts: int = 3,
+        timeout: int = 10,
+    ) -> None:
+        """Call start_scan/initialize with retries until wire.enabled.
+
+        wire_action must be 'start_scan' or 'initialize'; raises on failure.
         """
-        Start wire scan with retry logic.
-        """
+        if wire_action not in ("start_scan", "initialize"):
+            raise ValueError(
+                f"Unknown wire_action '{wire_action}'. Expected 'start_scan' or 'initialize'."
+            )
+
+        # Choose the appropriate method to call
+        action_method = (
+            self.my_wire.start_scan
+            if wire_action == "start_scan"
+            else self.my_wire.initialize
+        )
+        action_desc = (
+            "for on-the-fly scan" if wire_action == "start_scan" else "for step scan"
+        )
+
         for attempt in range(1, max_attempts + 1):
             self.logger.info(
-                f"Initializing {self.my_wire.name}: (Attempt {attempt}/{max_attempts})..."
+                f"Initializing {self.my_wire.name} {action_desc}: "
+                f"(Attempt {attempt}/{max_attempts})..."
             )
-            self.my_wire.start_scan()
+            action_method()
 
             # If returns True within timeout, proceed
             if self._wait_until(lambda: self.my_wire.enabled, timeout=timeout):
@@ -342,6 +447,51 @@ class WireMeasurementCollection(BeamProfileMeasurement):
         raise RuntimeError(
             f"Failed to initialize {self.my_wire.name} after {max_attempts} attempts."
         )
+
+    def _get_step_positions(self) -> list:
+        """Return sorted inner/outer positions for active profiles."""
+        positions = []
+        for profile in self._active_profiles():
+            for mode in ["inner", "outer"]:
+                attr_name = f"{profile}_wire_{mode}"
+                positions.append(getattr(self.my_wire, attr_name))
+        return sorted(positions)
+
+    def _calculate_step_speed(self, position_index: int, positions: list) -> int:
+        """Return speed for a step position: max for inner, computed for outer.
+
+        Even indices use speed_max; odd indices use calc speed.
+        """
+        if position_index % 2 == 0:
+            # inner position – use maximum speed
+            return int(self.my_wire.speed_max)
+
+        # outer position – calculate speed to span gap in one pulse train
+        position_delta = positions[position_index] - positions[position_index - 1]
+        speed = (position_delta / self.my_wire.scan_pulses) * self.my_wire.beam_rate
+        return int(speed)
+
+    def _move_to_step_position(
+        self, position: int, position_index: int, total_positions: int
+    ) -> None:
+        """Move wire to a step position, waiting up to 15s or raise error."""
+        self.logger.info(
+            f"Moving wire to {position} (step {position_index + 1}/{total_positions})..."
+        )
+
+        # Set speed and move
+        positions = self._get_step_positions()
+        speed = self._calculate_step_speed(position_index, positions)
+        self.my_wire.speed = speed
+        self.my_wire.motor = position
+
+        # Wait for position with 250 um tolerance
+        if not self._wait_until(
+            lambda: abs(self.my_wire.motor_rbv - position) < 250, timeout=15
+        ):
+            raise RuntimeError(
+                f"{self.my_wire.name} did not reach position {position} after 15s."
+            )
 
     def _get_buffer_collection_method(self, device_name: str) -> Optional[str]:
         """
