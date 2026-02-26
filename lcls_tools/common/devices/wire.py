@@ -73,6 +73,7 @@ class WirePVSet(PVSet):
     start_scan: PV
     temperature: Optional[PV] = None
     timeout: Optional[PV] = None
+    torque_enable: Optional[PV] = None
     use_u_wire: PV
     use_x_wire: PV
     use_y_wire: PV
@@ -295,6 +296,19 @@ class Wire(Device):
         try:
             BooleanModel(value=val)
             self.controls_information.PVs.timeout.put(value=val)
+        except ValidationError as e:
+            print("Input must be 1 or 0:", e)
+
+    @property
+    def torque_enable(self):
+        """Returns enabled status of device torque enable"""
+        return self.controls_information.PVs.torque_enable.get()
+
+    @torque_enable.setter
+    def torque_enable(self, val: bool) -> None:
+        try:
+            BooleanModel(value=val)
+            self.controls_information.PVs.torque_enable.put(value=val)
         except ValidationError as e:
             print("Input must be 1 or 0:", e)
 
