@@ -316,7 +316,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         return x[left : right + 1], y[left : right + 1], (left, right)
 
     def _fit_detector_in_profile(
-        self, x_beam: np.ndarray, detector_signal: np.ndarray
+        self, x_beam: np.ndarray, detector_signal: np.ndarray, profile: str
     ) -> DetectorFit:
         """
         Fit a single detector signal within a profile using Gaussian curve.
@@ -324,16 +324,21 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         Parameters:
             x_beam (np.ndarray): Position data in beam coordinates.
             detector_signal (np.ndarray): Detector signal values.
+            profile (str): Profile name ('x', 'y', or 'u').
 
         Returns:
-            DetectorFit: Fit parameters and curve.
+            DetectorFit: Fit parameters (mean in stage coords, others in beam coords) and curve.
         """
         peak_window = self._peak_window(x=x_beam, y=detector_signal)
 
         # Get fit parameters
         fp = gaussian.fit(pos=peak_window[0], data=peak_window[1])
 
-        # Generate fit curve
+        # Convert mean from beam coordinates back to stage coordinates
+        scale = self._extract_wire_angle()
+        mean_stage = fp["mean"] / abs(scale[profile])
+
+        # Generate fit curve (in beam coordinates)
         fit_curve = gaussian.curve(
             x=peak_window[0],
             mean=fp["mean"],
@@ -343,7 +348,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         )
 
         return DetectorFit(
-            mean=fp["mean"],
+            mean=mean_stage,
             sigma=fp["sigma"],
             amplitude=fp["amp"],
             offset=fp["off"],
@@ -374,7 +379,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
                 continue
 
             detector_fits[detector_name] = self._fit_detector_in_profile(
-                x_beam, profile_data.detectors[detector_name].values
+                x_beam, profile_data.detectors[detector_name].values, profile
             )
 
         return FitResult(detectors=detector_fits)
