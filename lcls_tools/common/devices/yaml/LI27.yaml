@@ -1,34 +1,3 @@
-magnets:
-  XC29090:
-    controls_information:
-      PVs: {}
-      control_name: LI27:XCOR:90
-    metadata:
-      area: LI27
-      beam_path: []
-      l_eff: 0.0
-      sum_l_meters: null
-      type: XCOR
-  YC29090:
-    controls_information:
-      PVs: {}
-      control_name: LI27:YCOR:90
-    metadata:
-      area: LI27
-      beam_path: []
-      l_eff: 0.0
-      sum_l_meters: null
-      type: YCOR
-pmts:
-  PMT27644:
-    controls_information:
-      PVs: {}
-      control_name: PMT:LI27:644
-    metadata:
-      area: LI27
-      beam_path: []
-      sum_l_meters: null
-      type: INST
 wires:
   WS044:
     controls_information:
@@ -50,6 +19,7 @@ wires:
         start_scan: WIRE:LI27:644:STARTSCAN
         temperature: WIRE:LI27:644:TEMP
         timeout: WIRE:LI27:644:MOTR_TIMEOUTEN
+        torque_enable: WIRE:LI27:644:MOTR_SWITCH_ON_CMD
         u_size: WIRE:LI27:644:UWIRESIZE
         u_wire_inner: WIRE:LI27:644:UWIREINNER
         u_wire_outer: WIRE:LI27:644:UWIREOUTER
