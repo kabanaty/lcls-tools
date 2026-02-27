@@ -60,8 +60,6 @@ class WireMeasurementAnalysisResult(BeamProfileMeasurementResult):
         :py:meth:`WireMeasurementCollectionResult.save_to_h5` for the
         collection portion and adds two additional groups under
         ``/analysis``:
-
-            # from datetime import datetime
             Hierarchical groups for each profile and detector containing
             fit parameters, the fitted curve and the positions array.
         ``/analysis/profiles``
