@@ -1,70 +1,3 @@
-magnets:
-  XC29096:
-    controls_information:
-      PVs: {}
-      control_name: LI29:XCOR:96
-    metadata:
-      area: LI28
-      beam_path: []
-      l_eff: 0.0
-      sum_l_meters: null
-      type: XCOR
-  YC29096:
-    controls_information:
-      PVs: {}
-      control_name: LI29:YCOR:96
-    metadata:
-      area: LI28
-      beam_path: []
-      l_eff: 0.0
-      sum_l_meters: null
-      type: YCOR
-pmts:
-  PMT28144:
-    controls_information:
-      PVs: {}
-      control_name: PMT:LI28:144
-    metadata:
-      area: LI28
-      beam_path: []
-      sum_l_meters: null
-      type: INST
-  PMT28150:
-    controls_information:
-      PVs: {}
-      control_name: PMT:LI28:150
-    metadata:
-      area: LI28
-      beam_path: []
-      sum_l_meters: null
-      type: INST
-  PMT28444:
-    controls_information:
-      PVs: {}
-      control_name: PMT:LI28:444
-    metadata:
-      area: LI28
-      beam_path: []
-      sum_l_meters: null
-      type: INST
-  PMT28744:
-    controls_information:
-      PVs: {}
-      control_name: PMT:LI28:744
-    metadata:
-      area: LI28
-      beam_path: []
-      sum_l_meters: null
-      type: INST
-  PMT28750:
-    controls_information:
-      PVs: {}
-      control_name: PMT:LI28:750
-    metadata:
-      area: LI28
-      beam_path: []
-      sum_l_meters: null
-      type: INST
 wires:
   WS144:
     controls_information:
@@ -86,6 +19,7 @@ wires:
         start_scan: WIRE:LI28:144:STARTSCAN
         temperature: WIRE:LI28:144:TEMP
         timeout: WIRE:LI28:144:MOTR_TIMEOUTEN
+        torque_enable: WIRE:LI28:144:MOTR_SWITCH_ON_CMD
         u_size: WIRE:LI28:144:UWIRESIZE
         u_wire_inner: WIRE:LI28:144:UWIREINNER
         u_wire_outer: WIRE:LI28:144:UWIREOUTER
@@ -108,6 +42,7 @@ wires:
     controls_information:
       PVs:
         abort_scan: WIRE:LI28:444:MOTR.STOP
+        beam_rate: WIRE:LI28:444:BEAMRATE
         enabled: WIRE:LI28:444:MOTR_ENABLED_STS
         homed: WIRE:LI28:444:MOTR_HOMED_STS
         initialize: WIRE:LI28:444:MOTR_INIT
@@ -123,6 +58,7 @@ wires:
         start_scan: WIRE:LI28:444:STARTSCAN
         temperature: WIRE:LI28:444:TEMP
         timeout: WIRE:LI28:444:MOTR_TIMEOUTEN
+        torque_enable: WIRE:LI28:444:MOTR_SWITCH_ON_CMD
         u_size: WIRE:LI28:444:UWIRESIZE
         u_wire_inner: WIRE:LI28:444:UWIREINNER
         u_wire_outer: WIRE:LI28:444:UWIREOUTER
@@ -145,6 +81,7 @@ wires:
     controls_information:
       PVs:
         abort_scan: WIRE:LI28:744:MOTR.STOP
+        beam_rate: WIRE:LI28:744:BEAMRATE
         enabled: WIRE:LI28:744:MOTR_ENABLED_STS
         homed: WIRE:LI28:744:MOTR_HOMED_STS
         initialize: WIRE:LI28:744:MOTR_INIT
@@ -160,6 +97,7 @@ wires:
         start_scan: WIRE:LI28:744:STARTSCAN
         temperature: WIRE:LI28:744:TEMP
         timeout: WIRE:LI28:744:MOTR_TIMEOUTEN
+        torque_enable: WIRE:LI28:744:MOTR_SWITCH_ON_CMD
         u_size: WIRE:LI28:744:UWIRESIZE
         u_wire_inner: WIRE:LI28:744:UWIREINNER
         u_wire_outer: WIRE:LI28:744:UWIREOUTER
