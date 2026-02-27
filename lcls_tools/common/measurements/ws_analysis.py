@@ -95,6 +95,8 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             detectors = {}
             positions = None
             for d_n in self.collection_result.metadata.detectors:
+                if d_n not in self.collection_result.raw_data:
+                    continue
                 data_slice = self.collection_result.raw_data[d_n][index]
 
                 if d_n == self.collection_result.metadata.wire_name:
