@@ -634,3 +634,4 @@ class WireMeasurementCollection(BeamProfileMeasurement):
             destination_mode="Inclusion",
             logger=self.logger,
         )
+
