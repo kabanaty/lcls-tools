@@ -80,7 +80,7 @@ class MultiWireMeasurementCollection(BeamProfileMeasurement):
         return self
 
     def measure(
-        self, scan_type: str = "on_the_fly", initialize_timeout: int = 30
+        self, scan_type: str = "step", initialize_timeout: int = 10
     ) -> MultiWireMeasurementCollectionResult:
         """
         Execute multi-wire scan: initialize all wires, then measure each.
@@ -96,7 +96,8 @@ class MultiWireMeasurementCollection(BeamProfileMeasurement):
         scan_type : str, optional
             ``"on_the_fly"`` or ``"step"``. Passed to each wire's measure().
         initialize_timeout : int, optional
-            Maximum time (seconds) to wait for all wires to initialize.
+            Timeout (seconds) for each initialization attempt.
+            Multi-wire initialization retries up to 3 attempts.
 
         Returns
         -------
@@ -106,31 +107,12 @@ class MultiWireMeasurementCollection(BeamProfileMeasurement):
         Raises
         ------
         RuntimeError
-            If any wire fails to initialize within the timeout period.
+            If any wire fails to initialize after all retry attempts.
         """
         self.logger.info("Starting multi-wire measurement sequence")
 
-        # Step 1: Initialize all wires simultaneously
-        self.logger.info("Initializing all wires simultaneously...")
-        for wire_name, collection in self.wire_collections.items():
-            self.logger.info(f"Sending initialize command to {wire_name}")
-            collection.my_wire.initialize()
-
-        # Step 2: Wait for all wires to be enabled
-        self.logger.info(
-            f"Waiting for all wires to enable "
-            f"(timeout: {initialize_timeout}s)..."
-        )
-        if not self._wait_for_all_wires_enabled(timeout=initialize_timeout):
-            failed_wires = [
-                name
-                for name, collection in self.wire_collections.items()
-                if not collection.my_wire.enabled
-            ]
-            raise RuntimeError(
-                f"Failed to initialize wires within {initialize_timeout}s. "
-                f"Failed wires: {', '.join(failed_wires)}"
-            )
+        # Step 1/2: Initialize all wires with retry and wait until enabled
+        self._initialize_all_wires_with_retry(timeout=initialize_timeout)
 
         self.logger.info("All wires successfully initialized")
 
@@ -196,6 +178,48 @@ class MultiWireMeasurementCollection(BeamProfileMeasurement):
             time.sleep(check_period)
 
         return False
+
+    def _initialize_all_wires_with_retry(
+        self, max_attempts: int = 3, timeout: int = 10
+    ) -> None:
+        """Initialize all wires with retries until all are enabled."""
+        for attempt in range(1, max_attempts + 1):
+            self.logger.info(
+                "Initializing all wires for multi-wire scan: "
+                f"(Attempt {attempt}/{max_attempts})..."
+            )
+
+            # Send initialize command only to wires not yet enabled.
+            for wire_name, collection in self.wire_collections.items():
+                if collection.my_wire.enabled:
+                    continue
+                self.logger.info(f"Sending initialize command to {wire_name}")
+                collection.my_wire.initialize()
+
+            # Wait until all wires are enabled for this attempt.
+            if self._wait_for_all_wires_enabled(timeout=timeout):
+                self.logger.info("All wires successfully initialized")
+                return
+
+            failed_wires = [
+                name
+                for name, collection in self.wire_collections.items()
+                if not collection.my_wire.enabled
+            ]
+            self.logger.warning(
+                "Some wires did not enable after "
+                f"{timeout}s - retrying. Failed wires: {failed_wires}"
+            )
+
+        failed_wires = [
+            name
+            for name, collection in self.wire_collections.items()
+            if not collection.my_wire.enabled
+        ]
+        raise RuntimeError(
+            "Failed to initialize all wires after "
+            f"{max_attempts} attempts. Failed wires: {', '.join(failed_wires)}"
+        )
 
     def _logger_config(self) -> logging.Logger:
         """Configure logger using standard configuration."""
