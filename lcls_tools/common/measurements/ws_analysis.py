@@ -255,7 +255,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
         return positions * abs(scale[profile])
 
     def _peak_window(
-        self, x: np.ndarray, y: np.ndarray, n_stds: float = 6, filter_size: int = 5
+        self, x: np.ndarray, y: np.ndarray, n_stds: float = 8, filter_size: int = 5
     ) -> tuple:
         """
         Extract peak window from 1D detector data using statistical windowing.
@@ -267,7 +267,7 @@ class WireMeasurementAnalysis(BeamProfileAnalysis):
             x (np.ndarray): Position data.
             y (np.ndarray): Detector signal values.
             n_stds (float): Number of standard deviations for windowing.
-                            Default is 6.
+                            Default is 8.
             filter_size (int): Median filter kernel size. Default is 5.
 
         Returns:
